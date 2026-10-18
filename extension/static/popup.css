@@ -1,0 +1,12 @@
+:root { color-scheme: light dark; --fg: #131820; --muted: #5e6875; --line: #e3e6eb; --ok: #15803d; --err: #c2283b; --bg: #fff; }
+@media (prefers-color-scheme: dark) { :root { --fg: #e7ebf0; --muted: #8f9aa8; --line: #2a313b; --ok: #3fbf6f; --err: #f0576c; --bg: #161a20; } }
+body { width: 320px; margin: 0; padding: 12px 14px; font: 13px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--fg); background: var(--bg); }
+header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+h1 { font-size: 14px; margin: 0; }
+.status { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 8px; }
+.status.ok { border-color: color-mix(in srgb, var(--ok) 40%, transparent); color: var(--ok); }
+.status.err { border-color: color-mix(in srgb, var(--err) 40%, transparent); color: var(--err); }
+.row { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.row small { display: block; color: var(--muted); font-size: 11.5px; }
+input[type="checkbox"] { width: 16px; height: 16px; margin-top: 2px; }
+.muted { color: var(--muted); font-size: 11.5px; margin: 8px 0 0; }
