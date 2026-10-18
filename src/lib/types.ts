@@ -190,6 +190,7 @@ export interface Settings {
   remove_completed_from_list: boolean;
   notify_on_complete: boolean;
   notify_on_error: boolean;
+  prevent_sleep: boolean;
   minimize_to_tray: boolean;
   theme: Theme;
   language: string;

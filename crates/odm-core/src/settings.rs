@@ -119,6 +119,8 @@ pub struct Settings {
     pub remove_completed_from_list: bool,
     pub notify_on_complete: bool,
     pub notify_on_error: bool,
+    /// Prevent idle system sleep while downloads are running.
+    pub prevent_sleep: bool,
     pub minimize_to_tray: bool,
     pub theme: Theme,
     pub language: String,
@@ -158,6 +160,7 @@ impl Default for Settings {
             remove_completed_from_list: false,
             notify_on_complete: true,
             notify_on_error: true,
+            prevent_sleep: true,
             minimize_to_tray: true,
             theme: Theme::System,
             language: "de".into(),

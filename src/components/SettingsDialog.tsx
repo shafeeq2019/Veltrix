@@ -152,6 +152,12 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
               <Switch label="Beim Schließen in den Hintergrund minimieren" description="Die App läuft im System-Tray bzw. in der Menüleiste weiter." checked={draft.minimize_to_tray} onChange={(v) => set("minimize_to_tray", v)} />
               <Switch label="Benachrichtigung bei abgeschlossenen Downloads" checked={draft.notify_on_complete} onChange={(v) => set("notify_on_complete", v)} />
               <Switch label="Benachrichtigung bei Fehlern" checked={draft.notify_on_error} onChange={(v) => set("notify_on_error", v)} />
+              <Switch
+                label="Ruhezustand verhindern, solange Downloads laufen"
+                description="Der Bildschirm darf sich weiterhin sperren und ausschalten; nur der automatische Ruhezustand wird aufgeschoben."
+                checked={draft.prevent_sleep}
+                onChange={(v) => set("prevent_sleep", v)}
+              />
               <Switch label="Unterbrochene Downloads nach Neustart fortsetzen" checked={draft.resume_on_startup} onChange={(v) => set("resume_on_startup", v)} />
               <Switch label="Abgeschlossene Downloads automatisch aus der Liste entfernen" description="Die Dateien bleiben erhalten." checked={draft.remove_completed_from_list} onChange={(v) => set("remove_completed_from_list", v)} />
             </>

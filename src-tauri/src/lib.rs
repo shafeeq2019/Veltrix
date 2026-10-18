@@ -3,6 +3,7 @@
 mod capture;
 mod commands;
 mod native_host;
+mod power;
 mod tray;
 
 use odm_core::model::EngineEvent;
@@ -65,6 +66,7 @@ pub fn run() {
 
             forward_events(app.handle().clone(), manager.clone());
             start_ipc(app.handle().clone(), manager.clone(), offers, data_dir.clone());
+            keep_awake_while_downloading(manager.clone());
             tray::create(app.handle())?;
 
             if native_host::host_executable().is_some() {
@@ -189,6 +191,23 @@ fn start_ipc(app: tauri::AppHandle, manager: Manager, offers: capture::Offers, d
     tauri::async_runtime::spawn(async move {
         if let Err(e) = odm_ipc::server::serve(&data_dir, handler).await {
             tracing::error!(error = %e, "browser integration endpoint unavailable");
+        }
+    });
+}
+
+/// Hold a power assertion while at least one download is active.
+fn keep_awake_while_downloading(manager: Manager) {
+    let guard = power::SleepGuard::new();
+    tauri::async_runtime::spawn(async move {
+        let mut held = false;
+        loop {
+            let wanted =
+                manager.settings().prevent_sleep && manager.list().iter().any(|d| d.download.status.is_active());
+            if wanted != held {
+                guard.set(wanted);
+                held = wanted;
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(3)).await;
         }
     });
 }
