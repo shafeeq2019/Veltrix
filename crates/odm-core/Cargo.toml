@@ -1,0 +1,31 @@
+[package]
+name = "odm-core"
+description = "OpenDownload Manager download engine, queue, scheduler and storage"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+url.workspace = true
+uuid.workspace = true
+# HTTP/1.1 only on purpose: segmented downloads need separate TCP connections,
+# HTTP/2 would multiplex every segment over one connection.
+reqwest = { version = "0.13", default-features = false, features = ["rustls", "charset", "system-proxy"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
+percent-encoding = "2.3"
+sha2 = "0.11"
+chrono = { version = "0.4", default-features = false, features = ["clock", "serde", "std"] }
+rand = "0.10"
+
+[dev-dependencies]
+tempfile = "3"
+axum = "0.8"
+futures-util = "0.3"
+bytes = "1"
+tokio = { workspace = true, features = ["test-util"] }
