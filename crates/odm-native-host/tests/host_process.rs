@@ -63,7 +63,21 @@ async fn relays_to_app_and_validates() {
         });
     let d2 = data.clone();
     tokio::spawn(async move { serve(&d2, handler).await.unwrap() });
-    tokio::time::sleep(Duration::from_millis(200)).await;
+    // Wait until the endpoint answers (named pipes start slower on Windows CI).
+    let probe_dir = data.clone();
+    let ready = tokio::task::spawn_blocking(move || {
+        let client = odm_ipc::transport::Client::new(probe_dir);
+        (0..100).any(|_| {
+            let ok = client.request(None, Envelope::new("probe", Request::Ping)).is_ok();
+            if !ok {
+                std::thread::sleep(Duration::from_millis(100));
+            }
+            ok
+        })
+    })
+    .await
+    .unwrap();
+    assert!(ready, "IPC server did not start");
 
     let out = tokio::task::spawn_blocking(move || {
         run_host(
@@ -79,7 +93,7 @@ async fn relays_to_app_and_validates() {
     .await
     .unwrap();
     assert_eq!(out.len(), 4);
-    assert_eq!(out[0]["type"], "pong");
+    assert_eq!(out[0]["type"], "pong", "{:?}", out[0]);
     assert_eq!(out[1]["decision"], "accepted");
     assert_eq!(out[2]["code"], "bad_request");
     assert_eq!(out[3]["code"], "bad_request");

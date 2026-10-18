@@ -100,11 +100,23 @@ writeFileSync(
 );
 
 // 4. Desktop app in background mode.
-const env = { ...process.env, ODM_DATA_DIR: dataDir, ODM_LOG: "info" };
+// Software rendering keeps WebKitGTK happy on headless CI machines.
+const env = { ...process.env, ODM_DATA_DIR: dataDir, ODM_LOG: "info", WEBKIT_DISABLE_COMPOSITING_MODE: "1", WEBKIT_DISABLE_DMABUF_RENDERER: "1", LIBGL_ALWAYS_SOFTWARE: "1" };
 const app = spawn(join(root, "target/debug/opendownload-manager"), ["--background"], { env, stdio: ["ignore", "inherit", "inherit"] });
-const deadline = Date.now() + 30_000;
+app.on("exit", (code, signal) => console.error(`app exited: code=${code} signal=${signal}`));
+const deadline = Date.now() + 60_000;
 while (!existsSync(join(dataDir, "ipc-token")) || !existsSync(join(dataDir, "ipc.sock"))) {
-  if (Date.now() > deadline) throw new Error("app did not start");
+  if (Date.now() > deadline) {
+    try {
+      console.error(readFileSync(join(dataDir, "logs", "odm.log"), "utf8"));
+    } catch {
+      console.error("no app log written");
+    }
+    console.error("data dir:", readdirSync(dataDir));
+    app.kill("SIGKILL");
+    server.close();
+    throw new Error("app did not start");
+  }
   await new Promise((r) => setTimeout(r, 200));
 }
 
