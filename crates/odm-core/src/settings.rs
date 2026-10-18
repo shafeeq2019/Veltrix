@@ -127,7 +127,14 @@ pub struct Settings {
     pub custom_categories: Vec<CustomCategory>,
     /// Optional user agent override. Empty = default.
     pub user_agent: String,
+    /// Chromium extension ids allowed to use the native messaging host.
+    pub chromium_extension_ids: Vec<String>,
 }
+
+/// Id of the bundled extension when loaded unpacked (pinned via the `key`
+/// in its manifest). Store builds get a different id that must be added.
+pub const DEFAULT_CHROMIUM_EXTENSION_ID: &str = "pjmfnhocabgijmcbdcbkfeaogjnhffea";
+pub const FIREFOX_EXTENSION_ID: &str = "odm@opendownload-manager.local";
 
 impl Default for Settings {
     fn default() -> Self {
@@ -158,6 +165,7 @@ impl Default for Settings {
             capture: CaptureSettings::default(),
             custom_categories: vec![],
             user_agent: String::new(),
+            chromium_extension_ids: vec![DEFAULT_CHROMIUM_EXTENSION_ID.into()],
         }
     }
 }
@@ -210,6 +218,9 @@ impl Settings {
         self.capture.excluded_domains.retain(|d| !d.is_empty());
         self.capture.excluded_url_patterns.retain(|p| !p.trim().is_empty());
         self.user_agent = self.user_agent.chars().filter(|c| !c.is_control()).take(512).collect();
+        // Chromium ids are exactly 32 letters a-p.
+        self.chromium_extension_ids.retain(|id| id.len() == 32 && id.chars().all(|c| ('a'..='p').contains(&c)));
+        self.chromium_extension_ids.dedup();
     }
 
     pub fn effective_limits(&self) -> EffectiveLimits {
