@@ -1,6 +1,16 @@
 [package]
 name = "odm-native-host"
+description = "Native messaging host that relays browser extension requests to OpenDownload Manager"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+rust-version.workspace = true
+
 [dependencies]
+odm-ipc = { path = "../odm-ipc" }
+serde_json.workspace = true
+
+[dev-dependencies]
+odm-ipc = { path = "../odm-ipc", features = ["server"] }
+tokio = { workspace = true }
+tempfile = "3"
