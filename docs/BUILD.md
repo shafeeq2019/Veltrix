@@ -83,6 +83,19 @@ npx tauri build --target universal-apple-darwin --config src-tauri/tauri.bundle.
 * `.github/workflows/release.yml` – bei Tag `v*`: Windows-x64- und macOS-Universal-Installer
   über `tauri-action` als Draft-Release, Erweiterungs-ZIPs als Artefakt.
 
+## Unsignierte Testbuilds auf dem Mac öffnen
+
+Die CI-Artefakte sind Universal-Builds (Intel + Apple Silicon) und nur ad-hoc signiert.
+Gatekeeper blockiert sie daher beim ersten Start. Entweder im Finder Rechtsklick → „Öffnen“
+(bzw. Systemeinstellungen → Datenschutz & Sicherheit → „Dennoch öffnen“) oder:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/OpenDownload Manager.app"
+```
+
+Die Meldung „… wird auf diesem Mac nicht unterstützt“ bedeutet dagegen eine falsche
+Prozessorarchitektur (z. B. ein reiner Apple-Silicon-Build auf einem Intel-Mac).
+
 ## Signierung und Notarisierung
 
 Ohne Signatur funktionieren die Builds, aber Windows SmartScreen bzw. macOS Gatekeeper warnen.

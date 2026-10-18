@@ -117,17 +117,20 @@ jobs:
           - name: windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
+            rust-targets: x86_64-pc-windows-msvc
             bundles: nsis,msi
           - name: macos
             os: macos-latest
-            target: aarch64-apple-darwin
+            # Universal binary: runs on Intel and Apple Silicon Macs.
+            target: universal-apple-darwin
+            rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
             bundles: app,dmg
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: ${{ matrix.rust-targets }}
       - uses: Swatinem/rust-cache@v2
       - uses: actions/setup-node@v4
         with:
