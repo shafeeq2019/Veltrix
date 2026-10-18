@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-bg: var(--odm-bg);
+  --color-panel: var(--odm-panel);
+  --color-panel-2: var(--odm-panel-2);
+  --color-line: var(--odm-line);
+  --color-fg: var(--odm-fg);
+  --color-muted: var(--odm-muted);
+  --color-accent: var(--odm-accent);
+  --color-accent-fg: var(--odm-accent-fg);
+  --color-accent-soft: var(--odm-accent-soft);
+  --color-ok: var(--odm-ok);
+  --color-warn: var(--odm-warn);
+  --color-err: var(--odm-err);
+  --animate-fade-in: fade-in 120ms ease-out;
+  --animate-pop-in: pop-in 140ms ease-out;
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(4px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+}
+
+:root {
+  --odm-bg: #f6f7f9;
+  --odm-panel: #ffffff;
+  --odm-panel-2: #f1f3f6;
+  --odm-line: #e3e6eb;
+  --odm-fg: #131820;
+  --odm-muted: #5e6875;
+  --odm-accent: #2563eb;
+  --odm-accent-fg: #ffffff;
+  --odm-accent-soft: #e6eefe;
+  --odm-ok: #15803d;
+  --odm-warn: #b45309;
+  --odm-err: #c2283b;
+  color-scheme: light;
+}
+
+.dark {
+  --odm-bg: #0f1216;
+  --odm-panel: #161a20;
+  --odm-panel-2: #1d222a;
+  --odm-line: #2a313b;
+  --odm-fg: #e7ebf0;
+  --odm-muted: #8f9aa8;
+  --odm-accent: #4f8bff;
+  --odm-accent-fg: #ffffff;
+  --odm-accent-soft: #1b2a47;
+  --odm-ok: #3fbf6f;
+  --odm-warn: #e0a043;
+  --odm-err: #f0576c;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--odm-bg);
+  color: var(--odm-fg);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  overflow: hidden;
+}
+
+input,
+textarea,
+select {
+  user-select: text;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--odm-line);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.progress-stripes {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.18) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.18) 50%,
+    rgba(255, 255, 255, 0.18) 75%,
+    transparent 75%
+  );
+  background-size: 16px 16px;
+  animation: stripes 1s linear infinite;
+}
+@keyframes stripes {
+  from { background-position: 16px 0; }
+  to { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-stripes { animation: none; }
+}
