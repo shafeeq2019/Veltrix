@@ -85,42 +85,79 @@ async function offer(body: Record<string, unknown>): Promise<HostResponse> {
 
 const inFlight = new Set<number>();
 
+// In-memory copy of the stored state so the capture decision for a fresh
+// download can be made synchronously, before the browser has transferred
+// much of the file. Refreshed whenever storage changes.
+let memState: LocalState | null = null;
+void getState().then((s) => (memState = s));
+ext.storage.onChanged.addListener((changes, area) => {
+  if (area === "local" && changes.state) memState = { ...DEFAULT_STATE, ...(changes.state.newValue as Partial<LocalState>) };
+});
+
+function describe(item: chrome.downloads.DownloadItem, incognito: boolean) {
+  const size = item.totalBytes > 0 ? item.totalBytes : item.fileSize > 0 ? item.fileSize : undefined;
+  return { url: item.url, finalUrl: item.finalUrl, filename: item.filename ? basename(item.filename) : undefined, mime: item.mime, size, incognito };
+}
+
+function eligible(item: chrome.downloads.DownloadItem): boolean {
+  if (inFlight.has(item.id) || item.byExtensionId === ext.runtime.id || item.state !== "in_progress") return false;
+  // blob:, data: and file: downloads only exist inside the browser.
+  return /^https?:/i.test(item.url) && /^https?:/i.test(item.finalUrl || item.url);
+}
+
 async function handleDownload(item: chrome.downloads.DownloadItem): Promise<void> {
-  if (inFlight.has(item.id) || item.byExtensionId === ext.runtime.id || item.state !== "in_progress") return;
+  if (!eligible(item)) return;
+  // Fast path: decide with the cached state and pause right away.
+  let pausedEarly = false;
+  const cached = memState;
+  if (cached && !cached.paused && cached.hostStatus !== "host_missing" && cached.config) {
+    if (!shouldCapture(describe(item, item.incognito), cached.config).capture) return;
+    inFlight.add(item.id);
+    pausedEarly = await ext.downloads.pause(item.id).then(
+      () => true,
+      () => false,
+    );
+    if (!pausedEarly) {
+      inFlight.delete(item.id);
+      return; // already finished or not pausable
+    }
+  }
   const s = await getState();
   if (s.paused || s.hostStatus === "host_missing") {
+    if (pausedEarly) await ext.downloads.resume(item.id).catch(() => {});
+    inFlight.delete(item.id);
     // Re-check the host occasionally so installing the app later works.
     if (s.hostStatus === "host_missing" && Date.now() - s.configAt > CONFIG_TTL_MS) void getConfig(true);
     return;
   }
   const url = item.finalUrl || item.url;
-  // blob:, data: and file: downloads only exist inside the browser.
-  if (!/^https?:/i.test(item.url) || !/^https?:/i.test(url)) return;
   const config = await getConfig();
-  const size = item.totalBytes > 0 ? item.totalBytes : item.fileSize > 0 ? item.fileSize : undefined;
-  const verdict = shouldCapture(
-    { url: item.url, finalUrl: item.finalUrl, filename: item.filename ? basename(item.filename) : undefined, mime: item.mime, size, incognito: item.incognito },
-    config,
-  );
-  if (!verdict.capture) return;
+  const info = describe(item, item.incognito);
+  if (!shouldCapture(info, config).capture) {
+    if (pausedEarly) await ext.downloads.resume(item.id).catch(() => {});
+    inFlight.delete(item.id);
+    return;
+  }
 
   inFlight.add(item.id);
   try {
     // Hold the browser download while the user decides; nothing is lost if
     // the app declines or is unavailable — the browser simply continues.
-    try {
-      await ext.downloads.pause(item.id);
-    } catch {
-      return; // already finished or not pausable
+    if (!pausedEarly) {
+      try {
+        await ext.downloads.pause(item.id);
+      } catch {
+        return; // already finished or not pausable
+      }
     }
     let resp: HostResponse;
     try {
       resp = await offer({
         url,
         final_url: item.finalUrl && item.finalUrl !== item.url ? item.finalUrl : undefined,
-        filename: item.filename ? basename(item.filename) : undefined,
+        filename: info.filename,
         mime: item.mime || undefined,
-        size,
+        size: info.size,
         referrer: config.send_referrer && /^https?:/i.test(item.referrer ?? "") ? item.referrer : undefined,
         cookies: await cookieHeader(url),
         source: "browser_download",
