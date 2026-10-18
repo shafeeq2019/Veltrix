@@ -14,8 +14,17 @@ pub const OTHER: &str = "other";
 const BUILTIN: &[(&str, &[&str])] = &[
     (VIDEO, &["mp4", "mkv", "avi", "mov", "wmv", "webm", "flv", "m4v", "mpg", "mpeg", "3gp", "ts"]),
     (MUSIC, &["mp3", "flac", "wav", "aac", "ogg", "oga", "m4a", "wma", "opus", "aiff"]),
-    (DOCUMENTS, &["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "txt", "rtf", "epub", "csv", "md"]),
-    (PROGRAMS, &["exe", "msi", "msix", "appx", "dmg", "pkg", "app", "deb", "rpm", "appimage", "apk", "bat", "cmd", "sh", "jar"]),
+    (
+        DOCUMENTS,
+        &["pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "txt", "rtf", "epub", "csv", "md"],
+    ),
+    (
+        PROGRAMS,
+        &[
+            "exe", "msi", "msix", "appx", "dmg", "pkg", "app", "deb", "rpm", "appimage", "apk", "bat", "cmd", "sh",
+            "jar",
+        ],
+    ),
     (ARCHIVES, &["zip", "rar", "7z", "tar", "gz", "tgz", "bz2", "xz", "zst", "iso", "img", "cab"]),
     (IMAGES, &["png", "jpg", "jpeg", "gif", "webp", "bmp", "tiff", "svg", "heic"]),
 ];
@@ -77,7 +86,11 @@ mod tests {
         assert_eq!(classify("x.7z", None, &[]), ARCHIVES);
         assert_eq!(classify("noext", Some("audio/mpeg"), &[]), MUSIC);
         assert_eq!(classify("noext", None, &[]), OTHER);
-        let custom = vec![CustomCategory { id: "c1".into(), name: "Torrents".into(), extensions: vec![".torrent".into(), "zip".into()] }];
+        let custom = vec![CustomCategory {
+            id: "c1".into(),
+            name: "Torrents".into(),
+            extensions: vec![".torrent".into(), "zip".into()],
+        }];
         assert_eq!(classify("a.torrent", None, &custom), "c1");
         assert_eq!(classify("a.zip", None, &custom), "c1");
     }

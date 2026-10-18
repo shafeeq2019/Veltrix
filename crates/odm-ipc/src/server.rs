@@ -34,7 +34,11 @@ pub async fn serve(data_dir: &Path, handler: Arc<dyn Handler>) -> io::Result<()>
     platform::serve(&name, token, handler).await
 }
 
-async fn handle_connection<S: AsyncRead + AsyncWrite + Unpin>(mut stream: S, token: Arc<str>, handler: Arc<dyn Handler>) {
+async fn handle_connection<S: AsyncRead + AsyncWrite + Unpin>(
+    mut stream: S,
+    token: Arc<str>,
+    handler: Arc<dyn Handler>,
+) {
     // The first message must arrive quickly; slow-loris peers are dropped.
     let msg = match tokio::time::timeout(Duration::from_secs(10), read_message::<_, AppRequest>(&mut stream)).await {
         Ok(Ok(m)) => m,

@@ -33,9 +33,7 @@ pub fn validate_download_url(input: &str) -> Result<ValidatedUrl> {
         return Err(DownloadError::new(ErrorCode::InvalidUrl, "The URL is too long").retryable(false));
     }
     if trimmed.chars().any(|c| c.is_control()) {
-        return Err(
-            DownloadError::new(ErrorCode::InvalidUrl, "The URL contains control characters").retryable(false)
-        );
+        return Err(DownloadError::new(ErrorCode::InvalidUrl, "The URL contains control characters").retryable(false));
     }
     let mut url = Url::parse(trimmed)
         .map_err(|e| DownloadError::new(ErrorCode::InvalidUrl, format!("Invalid URL: {e}")).retryable(false))?;
@@ -54,9 +52,7 @@ pub fn validate_download_url(input: &str) -> Result<ValidatedUrl> {
     }
     let credentials = if !url.username().is_empty() || url.password().is_some() {
         let username = percent_encoding::percent_decode_str(url.username()).decode_utf8_lossy().into_owned();
-        let password = url
-            .password()
-            .map(|p| percent_encoding::percent_decode_str(p).decode_utf8_lossy().into_owned());
+        let password = url.password().map(|p| percent_encoding::percent_decode_str(p).decode_utf8_lossy().into_owned());
         let _ = url.set_username("");
         let _ = url.set_password(None);
         Some(BasicCredentials { username, password })

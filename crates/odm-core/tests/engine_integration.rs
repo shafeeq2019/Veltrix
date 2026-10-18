@@ -158,7 +158,11 @@ async fn pause_resume_and_cancel() {
 
     // cancel removes the partial file
     let id2 = m
-        .add(AddDownloadRequest { url: server.url(&format!("/slow/{size}")), allow_duplicate: true, ..Default::default() })
+        .add(AddDownloadRequest {
+            url: server.url(&format!("/slow/{size}")),
+            allow_duplicate: true,
+            ..Default::default()
+        })
         .unwrap()
         .download
         .id;

@@ -55,13 +55,8 @@ pub struct DownloadError {
 
 impl DownloadError {
     pub fn new(code: ErrorCode, message: impl Into<String>) -> Self {
-        let retryable = matches!(
-            code,
-            ErrorCode::Network
-                | ErrorCode::Timeout
-                | ErrorCode::RateLimited
-                | ErrorCode::ServerError
-        );
+        let retryable =
+            matches!(code, ErrorCode::Network | ErrorCode::Timeout | ErrorCode::RateLimited | ErrorCode::ServerError);
         Self { code, message: message.into(), http_status: None, retryable, retry_after: None }
     }
 

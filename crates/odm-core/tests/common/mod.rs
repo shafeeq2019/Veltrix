@@ -61,9 +61,7 @@ pub struct TestServer {
 impl TestServer {
     pub async fn start() -> TestServer {
         let stats = Arc::new(Stats::default());
-        let app = Router::new()
-            .route("/{kind}/{arg}", get(handler))
-            .with_state(stats.clone());
+        let app = Router::new().route("/{kind}/{arg}", get(handler)).with_state(stats.clone());
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let addr = listener.local_addr().unwrap();
         tokio::spawn(async move {
@@ -89,7 +87,8 @@ fn parse_range(headers: &HeaderMap, size: u64) -> Option<(u64, u64)> {
     let r = v.strip_prefix("bytes=")?;
     let (a, b) = r.split_once('-')?;
     let start: u64 = a.parse().ok()?;
-    let end: u64 = if b.is_empty() { size.saturating_sub(1) } else { b.parse::<u64>().ok()?.min(size.saturating_sub(1)) };
+    let end: u64 =
+        if b.is_empty() { size.saturating_sub(1) } else { b.parse::<u64>().ok()?.min(size.saturating_sub(1)) };
     Some((start, end))
 }
 

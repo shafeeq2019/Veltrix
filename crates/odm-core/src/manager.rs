@@ -86,7 +86,13 @@ impl Entry {
             d.downloaded = r.progress.received.load(Ordering::Relaxed);
             d.total_size = r.progress.total().or(d.total_size);
         }
-        DownloadView { domain: url_util::domain_of(d.final_url.as_deref().unwrap_or(&d.url)), download: d, speed, eta_secs: eta, connections_active: conns }
+        DownloadView {
+            domain: url_util::domain_of(d.final_url.as_deref().unwrap_or(&d.url)),
+            download: d,
+            speed,
+            eta_secs: eta,
+            connections_active: conns,
+        }
     }
 }
 
@@ -123,12 +129,8 @@ impl Manager {
 
     fn recover(&self) -> Result<()> {
         let settings = self.settings();
-        let resume_ids: Vec<DownloadId> = self
-            .inner
-            .store
-            .get_value(RESUME_IDS_KEY)?
-            .and_then(|v| serde_json::from_str(&v).ok())
-            .unwrap_or_default();
+        let resume_ids: Vec<DownloadId> =
+            self.inner.store.get_value(RESUME_IDS_KEY)?.and_then(|v| serde_json::from_str(&v).ok()).unwrap_or_default();
         let mut to_start = Vec::new();
         {
             let mut entries = self.entries();
@@ -284,17 +286,17 @@ impl Manager {
                 .retryable(false));
             }
         }
-        let referrer = req
-            .referrer
-            .as_deref()
-            .and_then(|r| url_util::validate_download_url(r).ok())
-            .map(|r| r.url.to_string());
+        let referrer =
+            req.referrer.as_deref().and_then(|r| url_util::validate_download_url(r).ok()).map(|r| r.url.to_string());
         let save_dir = filename::validate_directory(req.save_dir.as_deref().unwrap_or(&settings.download_dir))?;
         let expected_sha256 = match req.expected_sha256.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
             Some(h) if h.len() == 64 && h.chars().all(|c| c.is_ascii_hexdigit()) => Some(h.to_ascii_lowercase()),
             Some(_) => {
-                return Err(DownloadError::new(ErrorCode::InvalidState, "The SHA-256 checksum must be 64 hex characters")
-                    .retryable(false))
+                return Err(DownloadError::new(
+                    ErrorCode::InvalidState,
+                    "The SHA-256 checksum must be 64 hex characters",
+                )
+                .retryable(false))
             }
             None => None,
         };
@@ -488,7 +490,9 @@ impl Manager {
     pub fn set_in_queue(&self, id: DownloadId, in_queue: bool) -> Result<()> {
         self.update_record(id, |d| {
             d.in_queue = in_queue;
-            if in_queue && matches!(d.status, DownloadStatus::Paused | DownloadStatus::Failed | DownloadStatus::Canceled) {
+            if in_queue
+                && matches!(d.status, DownloadStatus::Paused | DownloadStatus::Failed | DownloadStatus::Canceled)
+            {
                 d.status = DownloadStatus::Waiting;
                 d.error = None;
             } else if !in_queue && d.status == DownloadStatus::Waiting {
@@ -655,7 +659,11 @@ impl Manager {
         let progress = Arc::new(Progress::new(received, e.d.total_size));
         let (stop_tx, stop_rx) = watch::channel(StopSignal::Run);
         let weak = Arc::downgrade(&self.inner);
-        let segments = if e.d.connections > 0 { e.d.connections.min(limits.segments.max(e.d.connections)) } else { limits.segments };
+        let segments = if e.d.connections > 0 {
+            e.d.connections.min(limits.segments.max(e.d.connections))
+        } else {
+            limits.segments
+        };
         let ctx = TaskContext {
             client: self.client(),
             limiter: self.inner.limiter.clone(),
@@ -734,7 +742,8 @@ impl Manager {
                     remove_completed = settings.remove_completed_from_list;
                 }
                 Ok(Outcome::Paused) => {
-                    let by_queue_stop = e.d.in_queue && !self.queue_running() && !self.inner.shutting_down.load(Ordering::Relaxed);
+                    let by_queue_stop =
+                        e.d.in_queue && !self.queue_running() && !self.inner.shutting_down.load(Ordering::Relaxed);
                     e.d.status = if by_queue_stop { DownloadStatus::Waiting } else { DownloadStatus::Paused };
                 }
                 Ok(Outcome::Canceled) => {
@@ -767,11 +776,9 @@ impl Manager {
         if let Some(ev) = failed_event {
             self.emit(ev);
         }
-        if remove_completed {
-            if self.entries().remove(&id).is_some() {
-                let _ = self.inner.store.delete(id);
-                self.emit(EngineEvent::Removed { id });
-            }
+        if remove_completed && self.entries().remove(&id).is_some() {
+            let _ = self.inner.store.delete(id);
+            self.emit(EngineEvent::Removed { id });
         }
         self.inner.wake.notify_one();
     }
@@ -845,9 +852,13 @@ impl Manager {
         if settings.auto_retry_failed {
             let mut entries = self.entries();
             for e in entries.values_mut() {
-                let due = e.failed_at.map(|t| t.elapsed() >= Duration::from_secs(settings.auto_retry_delay_secs)).unwrap_or(false);
+                let due = e
+                    .failed_at
+                    .map(|t| t.elapsed() >= Duration::from_secs(settings.auto_retry_delay_secs))
+                    .unwrap_or(false);
                 let retryable = e.d.error.as_ref().map(|er| er.retryable).unwrap_or(false);
-                if e.d.status == DownloadStatus::Failed && due && retryable && e.d.retry_count < settings.auto_retry_max {
+                if e.d.status == DownloadStatus::Failed && due && retryable && e.d.retry_count < settings.auto_retry_max
+                {
                     e.d.retry_count += 1;
                     e.failed_at = None;
                     if e.d.in_queue {
@@ -871,8 +882,10 @@ impl Manager {
             let entries = self.entries();
             let running = entries.values().filter(|e| e.d.in_queue && e.run.is_some()).count() as u32;
             let free = limits.max_concurrent.saturating_sub(running) as usize;
-            let mut waiting: Vec<&Entry> =
-                entries.values().filter(|e| e.d.in_queue && e.run.is_none() && e.d.status == DownloadStatus::Waiting).collect();
+            let mut waiting: Vec<&Entry> = entries
+                .values()
+                .filter(|e| e.d.in_queue && e.run.is_none() && e.d.status == DownloadStatus::Waiting)
+                .collect();
             waiting.sort_by(|a, b| b.d.priority.cmp(&a.d.priority).then(a.d.queue_position.cmp(&b.d.queue_position)));
             waiting.iter().take(free).map(|e| e.d.id).collect()
         };

@@ -138,7 +138,9 @@ pub struct ValidationError(pub String);
 fn check_len(name: &str, value: &Option<String>, max: usize) -> Result<(), ValidationError> {
     match value {
         Some(v) if v.len() > max => Err(ValidationError(format!("{name} is too long"))),
-        Some(v) if v.chars().any(|c| c.is_control()) => Err(ValidationError(format!("{name} contains control characters"))),
+        Some(v) if v.chars().any(|c| c.is_control()) => {
+            Err(ValidationError(format!("{name} contains control characters")))
+        }
         _ => Ok(()),
     }
 }
@@ -163,7 +165,10 @@ impl Envelope<Request> {
         if self.v != PROTOCOL_VERSION {
             return Err(ValidationError(format!("unsupported protocol version {}", self.v)));
         }
-        if self.id.is_empty() || self.id.len() > MAX_ID || !self.id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') {
+        if self.id.is_empty()
+            || self.id.len() > MAX_ID
+            || !self.id.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        {
             return Err(ValidationError("invalid message id".into()));
         }
         if let Request::Offer(o) = &self.body {
@@ -196,7 +201,8 @@ mod tests {
         assert!(req.validate().is_ok());
         let ping: Envelope<Request> = serde_json::from_str(r#"{"v":1,"id":"p","type":"ping"}"#).unwrap();
         assert_eq!(ping.body, Request::Ping);
-        let resp = serde_json::to_string(&Envelope::new("a1", Response::Decision { decision: Decision::Queued })).unwrap();
+        let resp =
+            serde_json::to_string(&Envelope::new("a1", Response::Decision { decision: Decision::Queued })).unwrap();
         assert_eq!(resp, r#"{"v":1,"id":"a1","type":"decision","decision":"queued"}"#);
     }
 

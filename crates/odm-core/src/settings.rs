@@ -202,11 +202,9 @@ impl Settings {
         if self.speed_limit_bps < 1024 {
             self.speed_limit_bps = 1024;
         }
-        for list in [
-            &mut self.capture.file_types,
-            &mut self.capture.always_take_over,
-            &mut self.capture.excluded_file_types,
-        ] {
+        for list in
+            [&mut self.capture.file_types, &mut self.capture.always_take_over, &mut self.capture.excluded_file_types]
+        {
             for e in list.iter_mut() {
                 *e = e.trim().trim_start_matches('.').to_ascii_lowercase();
             }

@@ -42,11 +42,17 @@ async fn authenticated_roundtrip() {
         let offer = c
             .request(
                 Some("chrome-extension://abc/".into()),
-                Envelope::new("o1", Request::Offer(Offer { url: "https://x.org/queue.zip".into(), ..Default::default() })),
+                Envelope::new(
+                    "o1",
+                    Request::Offer(Offer { url: "https://x.org/queue.zip".into(), ..Default::default() }),
+                ),
             )
             .unwrap();
         let bad = c
-            .request(None, Envelope::new("o2", Request::Offer(Offer { url: "file:///etc/passwd".into(), ..Default::default() })))
+            .request(
+                None,
+                Envelope::new("o2", Request::Offer(Offer { url: "file:///etc/passwd".into(), ..Default::default() })),
+            )
             .unwrap();
         (pong, offer, bad)
     })
@@ -62,9 +68,11 @@ async fn authenticated_roundtrip() {
     let real = std::fs::read_to_string(&token_file).unwrap();
     std::fs::write(&token_file, "0".repeat(64)).unwrap();
     let data3 = data.clone();
-    let denied = tokio::task::spawn_blocking(move || Client::new(data3).request(None, Envelope::new("p2", Request::Ping)).unwrap())
-        .await
-        .unwrap();
+    let denied = tokio::task::spawn_blocking(move || {
+        Client::new(data3).request(None, Envelope::new("p2", Request::Ping)).unwrap()
+    })
+    .await
+    .unwrap();
     assert!(matches!(denied.body, Response::Error { code: IpcErrorCode::Unauthorized, .. }));
     std::fs::write(&token_file, real).unwrap();
 

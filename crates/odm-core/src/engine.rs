@@ -147,7 +147,7 @@ async fn run_once(ctx: &TaskContext, d: &mut Download) -> Result<Outcome> {
         let total = d.total_size;
         if total == Some(0) {
             drop(resp);
-            return finalize(ctx, d, &file).await;
+            return finalize(ctx, d, file).await;
         }
         d.segments = plan_segments(total, d.resumable, ctx.max_segments.max(1), ctx.min_segment_size);
         initial = Some(InitialResponse { resp, meta, permit });
@@ -170,9 +170,11 @@ async fn run_once(ctx: &TaskContext, d: &mut Download) -> Result<Outcome> {
     let result = run_segments(ctx, d, file.clone(), initial).await;
     d.downloaded = d.segments.iter().map(|s| s.written).sum();
     match result {
-        Ok(SegmentsResult::Done) => finalize(ctx, d, &file).await,
+        Ok(SegmentsResult::Done) => finalize(ctx, d, file).await,
         Ok(SegmentsResult::Stopped) => {
             sync_file(&file).await;
+            // Close the handle before a cancel deletes the file (Windows).
+            drop(file);
             Ok(stopped_outcome(&ctx.stop, d))
         }
         Err(e) => {
@@ -367,11 +369,8 @@ async fn run_segments(
     file: Arc<File>,
     initial: Option<InitialResponse>,
 ) -> Result<SegmentsResult> {
-    let table: Vec<SegRt> = d
-        .segments
-        .iter()
-        .map(|s| SegRt { state: *s, received: s.written, active: false, done: false })
-        .collect();
+    let table: Vec<SegRt> =
+        d.segments.iter().map(|s| SegRt { state: *s, received: s.written, active: false, done: false }).collect();
     let shared = Arc::new(Shared {
         table: Mutex::new(table),
         file,
@@ -442,6 +441,8 @@ async fn run_segments(
         }
     }
     checkpoint.abort();
+    // Wait until the checkpoint task is gone so it no longer holds the file.
+    let _ = checkpoint.await;
     ctx.progress.active_connections.store(0, Ordering::Relaxed);
     d.segments = shared.snapshot();
     let all_done = shared.lock().iter().all(|s| s.done || s.state.is_complete());
@@ -590,7 +591,9 @@ async fn download_segment(
                     r = http::send(&ctx.client, &spec) => r,
                     _ = wait_stop(stop) => return Ok(SegExit::Stopped),
                 };
-                match sent.and_then(|(resp, meta)| validate_segment_response(shared, &meta, pos, range.is_some()).map(|_| (resp, meta))) {
+                match sent.and_then(|(resp, meta)| {
+                    validate_segment_response(shared, &meta, pos, range.is_some()).map(|_| (resp, meta))
+                }) {
                     Ok((resp, meta)) => (resp, meta, permit),
                     Err(e) => {
                         drop(permit);
@@ -829,7 +832,7 @@ async fn sync_file(file: &Arc<File>) {
 }
 
 /// Verify size and checksum, then atomically move the part file into place.
-async fn finalize(ctx: &TaskContext, d: &mut Download, file: &Arc<File>) -> Result<Outcome> {
+async fn finalize(ctx: &TaskContext, d: &mut Download, file: Arc<File>) -> Result<Outcome> {
     let written: u64 = d.segments.iter().map(|s| s.written).sum();
     let total = match d.total_size {
         Some(t) => {
@@ -857,6 +860,8 @@ async fn finalize(ctx: &TaskContext, d: &mut Download, file: &Arc<File>) -> Resu
     }
     d.total_size = Some(total);
     d.downloaded = total;
+    // Windows cannot rename a file that is still open.
+    drop(file);
 
     let part = d.part_path();
     if let Some(expected) = d.expected_sha256.clone() {

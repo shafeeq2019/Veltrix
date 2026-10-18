@@ -93,7 +93,11 @@ fn targets() -> Vec<Target> {
         ] {
             v.push(Target { name, kind: Kind::Chromium, dir: config.join(rel).join("NativeMessagingHosts") });
         }
-        v.push(Target { name: "Firefox", kind: Kind::Firefox, dir: home.join(".mozilla").join("native-messaging-hosts") });
+        v.push(Target {
+            name: "Firefox",
+            kind: Kind::Firefox,
+            dir: home.join(".mozilla").join("native-messaging-hosts"),
+        });
     }
     v
 }
@@ -101,9 +105,17 @@ fn targets() -> Vec<Target> {
 #[cfg(windows)]
 fn targets() -> Vec<Target> {
     vec![
-        Target { name: "Google Chrome / Brave", kind: Kind::Chromium, registry_key: r"Software\Google\Chrome\NativeMessagingHosts" },
+        Target {
+            name: "Google Chrome / Brave",
+            kind: Kind::Chromium,
+            registry_key: r"Software\Google\Chrome\NativeMessagingHosts",
+        },
         Target { name: "Chromium", kind: Kind::Chromium, registry_key: r"Software\Chromium\NativeMessagingHosts" },
-        Target { name: "Microsoft Edge", kind: Kind::Chromium, registry_key: r"Software\Microsoft\Edge\NativeMessagingHosts" },
+        Target {
+            name: "Microsoft Edge",
+            kind: Kind::Chromium,
+            registry_key: r"Software\Microsoft\Edge\NativeMessagingHosts",
+        },
         Target { name: "Firefox", kind: Kind::Firefox, registry_key: r"Software\Mozilla\NativeMessagingHosts" },
     ]
 }
@@ -164,7 +176,8 @@ pub fn unregister(data_dir: &Path) -> IntegrationStatus {
         #[cfg(windows)]
         {
             use winreg::enums::HKEY_CURRENT_USER;
-            let _ = winreg::RegKey::predef(HKEY_CURRENT_USER).delete_subkey_all(format!(r"{}\{}", t.registry_key, HOST_NAME));
+            let _ = winreg::RegKey::predef(HKEY_CURRENT_USER)
+                .delete_subkey_all(format!(r"{}\{}", t.registry_key, HOST_NAME));
         }
     }
     let _ = std::fs::remove_dir_all(data_dir.join("native-messaging"));
@@ -179,7 +192,11 @@ pub fn status(data_dir: &Path) -> IntegrationStatus {
             #[cfg(not(windows))]
             {
                 let file = t.dir.join(format!("{HOST_NAME}.json"));
-                BrowserRegistration { browser: t.name.into(), registered: file.is_file(), location: file.to_string_lossy().into() }
+                BrowserRegistration {
+                    browser: t.name.into(),
+                    registered: file.is_file(),
+                    location: file.to_string_lossy().into(),
+                }
             }
             #[cfg(windows)]
             {

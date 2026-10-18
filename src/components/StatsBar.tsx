@@ -17,11 +17,12 @@ function Stat({ icon, label, value, tone }: { icon: React.ReactNode; label: stri
 
 export function StatsBar() {
   const downloads = useStore((s) => s.downloads);
-  const totalSpeed = useStore((s) => s.totalSpeed);
   const counts = useMemo(() => {
     const all = Object.values(downloads);
+    const running = all.filter((d) => d.status === "downloading" || d.status === "connecting");
     return {
-      active: all.filter((d) => d.status === "downloading" || d.status === "connecting").length,
+      active: running.length,
+      speed: running.reduce((sum, d) => sum + d.speed, 0),
       completed: all.filter((d) => d.status === "completed").length,
       failed: all.filter((d) => d.status === "failed").length,
     };
@@ -29,7 +30,7 @@ export function StatsBar() {
 
   return (
     <section className="grid shrink-0 grid-cols-2 gap-2 px-3 pt-3 lg:grid-cols-4" aria-label="Übersicht">
-      <Stat icon={<Gauge size={17} />} tone="bg-accent-soft text-accent" label="Gesamtgeschwindigkeit" value={formatSpeed(totalSpeed)} />
+      <Stat icon={<Gauge size={17} />} tone="bg-accent-soft text-accent" label="Gesamtgeschwindigkeit" value={formatSpeed(counts.speed)} />
       <Stat icon={<Activity size={17} />} tone="bg-sky-500/12 text-sky-600" label="Aktive Downloads" value={String(counts.active)} />
       <Stat icon={<CheckCircle2 size={17} />} tone="bg-ok/12 text-ok" label="Abgeschlossen" value={String(counts.completed)} />
       <Stat icon={<AlertTriangle size={17} />} tone="bg-err/12 text-err" label="Fehlgeschlagen" value={String(counts.failed)} />

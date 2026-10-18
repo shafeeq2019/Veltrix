@@ -196,9 +196,8 @@ impl Store {
 
     pub fn load_settings(&self) -> Result<Settings> {
         let conn = self.conn();
-        let raw: Option<String> = conn
-            .query_row("SELECT value FROM settings WHERE key = 'app'", [], |r| r.get(0))
-            .optional()?;
+        let raw: Option<String> =
+            conn.query_row("SELECT value FROM settings WHERE key = 'app'", [], |r| r.get(0)).optional()?;
         let mut settings = match raw {
             Some(json) => serde_json::from_str(&json).unwrap_or_else(|e| {
                 tracing::warn!(error = %e, "settings unreadable, using defaults");
@@ -220,10 +219,7 @@ impl Store {
     }
 
     pub fn get_value(&self, key: &str) -> Result<Option<String>> {
-        Ok(self
-            .conn()
-            .query_row("SELECT value FROM settings WHERE key = ?1", params![key], |r| r.get(0))
-            .optional()?)
+        Ok(self.conn().query_row("SELECT value FROM settings WHERE key = ?1", params![key], |r| r.get(0)).optional()?)
     }
 
     pub fn set_value(&self, key: &str, value: &str) -> Result<()> {
@@ -304,7 +300,12 @@ mod tests {
             total_size: Some(100),
             downloaded: 50,
             status: DownloadStatus::Paused,
-            error: Some(ErrorInfo { code: ErrorCode::Network, message: "x".into(), http_status: Some(503), retryable: true }),
+            error: Some(ErrorInfo {
+                code: ErrorCode::Network,
+                message: "x".into(),
+                http_status: Some(503),
+                retryable: true,
+            }),
             category: "archives".into(),
             priority: Priority::High,
             in_queue: true,
@@ -313,7 +314,10 @@ mod tests {
             etag: Some("\"abc\"".into()),
             last_modified: None,
             mime: Some("application/zip".into()),
-            segments: vec![SegmentState { start: 0, end: Some(49), written: 49 }, SegmentState { start: 50, end: Some(99), written: 1 }],
+            segments: vec![
+                SegmentState { start: 0, end: Some(49), written: 49 },
+                SegmentState { start: 50, end: Some(99), written: 1 },
+            ],
             connections: 0,
             expected_sha256: None,
             retry_count: 1,

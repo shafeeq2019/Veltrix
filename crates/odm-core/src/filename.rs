@@ -16,8 +16,8 @@ const MAX_NAME_BYTES: usize = 200;
 pub const FALLBACK_NAME: &str = "download";
 
 const WINDOWS_RESERVED: &[&str] = &[
-    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-    "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2",
+    "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ];
 
 /// Extract the file name from a `Content-Disposition` header.
@@ -238,17 +238,20 @@ pub fn safe_join(dir: &Path, name: &str) -> Result<PathBuf> {
 /// Validate a user supplied target directory.
 pub fn validate_directory(dir: &Path) -> Result<PathBuf> {
     if !dir.is_absolute() {
-        return Err(DownloadError::new(ErrorCode::InvalidPath, "The download folder must be an absolute path")
-            .retryable(false));
+        return Err(
+            DownloadError::new(ErrorCode::InvalidPath, "The download folder must be an absolute path").retryable(false)
+        );
     }
     if dir.components().any(|c| matches!(c, std::path::Component::ParentDir)) {
-        return Err(DownloadError::new(ErrorCode::InvalidPath, "The download folder must not contain '..'")
-            .retryable(false));
+        return Err(
+            DownloadError::new(ErrorCode::InvalidPath, "The download folder must not contain '..'").retryable(false)
+        );
     }
     std::fs::create_dir_all(dir).map_err(|e| DownloadError::io(&e, "Cannot create download folder"))?;
     if !dir.is_dir() {
-        return Err(DownloadError::new(ErrorCode::InvalidPath, "The download folder is not a directory")
-            .retryable(false));
+        return Err(
+            DownloadError::new(ErrorCode::InvalidPath, "The download folder is not a directory").retryable(false)
+        );
     }
     Ok(dir.to_path_buf())
 }

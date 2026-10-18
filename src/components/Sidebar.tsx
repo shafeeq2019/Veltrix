@@ -3,7 +3,11 @@ import { AlertTriangle, ArrowDownToLine, CheckCircle2, Clock, Folder, Layers, Lo
 import { useMemo } from "react";
 import { categoryCounts, STATUS_CATEGORIES, TYPE_CATEGORIES, type CategoryKey } from "../lib/filter";
 import { useStore } from "../lib/store";
+import type { CustomCategory } from "../lib/types";
 import { FileIcon } from "./FileIcon";
+
+// Stable fallback: a new [] per call would make the selector loop forever.
+const NO_CATEGORIES: CustomCategory[] = [];
 
 const STATUS_ICONS: Record<string, typeof Layers> = {
   all: Layers,
@@ -17,7 +21,7 @@ export function Sidebar() {
   const downloads = useStore((s) => s.downloads);
   const category = useStore((s) => s.category);
   const setCategory = useStore((s) => s.setCategory);
-  const custom = useStore((s) => s.settings?.custom_categories ?? []);
+  const custom = useStore((s) => s.settings?.custom_categories ?? NO_CATEGORIES);
   const counts = useMemo(() => categoryCounts(Object.values(downloads), custom), [downloads, custom]);
 
   const item = (key: CategoryKey, label: string, icon: React.ReactNode) => (

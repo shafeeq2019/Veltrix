@@ -12,7 +12,7 @@
     "test": "vitest run",
     "tauri": "tauri",
     "sidecar": "node scripts/build-sidecar.mjs",
-    "app:dev": "npm run sidecar -- --debug && tauri dev",
+    "app:dev": "cargo build -p odm-native-host && tauri dev",
     "app:build": "npm run sidecar && tauri build --config src-tauri/tauri.bundle.conf.json"
   },
   "dependencies": {

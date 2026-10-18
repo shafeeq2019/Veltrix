@@ -2,7 +2,7 @@
 //!
 //! * Unix (macOS/Linux): a Unix domain socket inside the per-user app data
 //!   directory (mode 0700), socket mode 0600, and the peer's UID is checked.
-//! * Windows: a named pipe `\\.\pipe\opendownload-manager-<user>` created
+//! * Windows: a named pipe `\\.\pipe\opendownload-manager-<user>-<hash>` created
 //!   with `first_pipe_instance` (prevents squatting) and
 //!   `reject_remote_clients`.
 //!
@@ -49,13 +49,17 @@ pub fn token_path(data_dir: &Path) -> PathBuf {
 pub fn endpoint(data_dir: &Path) -> String {
     #[cfg(windows)]
     {
-        let _ = data_dir;
         let user: String = std::env::var("USERNAME")
             .unwrap_or_else(|_| "user".into())
             .chars()
             .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '_' })
             .collect();
-        format!(r"\\.\pipe\opendownload-manager-{user}")
+        // The data directory is part of the name so that separate data
+        // directories (tests, portable setups) never share a pipe.
+        format!(
+            r"\\.\pipe\opendownload-manager-{user}-{:016x}",
+            fnv1a(data_dir.to_string_lossy().to_lowercase().as_bytes())
+        )
     }
     #[cfg(not(windows))]
     {
@@ -68,6 +72,11 @@ pub fn endpoint(data_dir: &Path) -> String {
             std::env::temp_dir().join(format!("odm-{uid}.sock")).to_string_lossy().into_owned()
         }
     }
+}
+
+#[cfg_attr(not(windows), allow(dead_code))]
+fn fnv1a(bytes: &[u8]) -> u64 {
+    bytes.iter().fold(0xcbf2_9ce4_8422_2325u64, |h, b| (h ^ *b as u64).wrapping_mul(0x0000_0100_0000_01b3))
 }
 
 /// Create a fresh random token and store it with user-only permissions.
@@ -139,7 +148,11 @@ impl Client {
         Client { data_dir, timeout: Duration::from_secs(150) }
     }
 
-    pub fn request(&self, origin: Option<String>, request: Envelope<Request>) -> Result<Envelope<Response>, ClientError> {
+    pub fn request(
+        &self,
+        origin: Option<String>,
+        request: Envelope<Request>,
+    ) -> Result<Envelope<Response>, ClientError> {
         let token = read_token(&self.data_dir).map_err(|e| {
             if e.kind() == io::ErrorKind::NotFound {
                 ClientError::NotRunning(e)

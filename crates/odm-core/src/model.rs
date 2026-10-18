@@ -90,6 +90,8 @@ pub struct SegmentState {
 }
 
 impl SegmentState {
+    /// Length in bytes; `None` while the end is unknown.
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> Option<u64> {
         self.end.map(|e| e + 1 - self.start)
     }

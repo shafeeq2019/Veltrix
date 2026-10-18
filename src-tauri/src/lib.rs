@@ -159,12 +159,7 @@ fn forward_events(app: tauri::AppHandle, manager: Manager) {
             let settings = manager.settings();
             match &event {
                 EngineEvent::Completed { file_name, .. } if settings.notify_on_complete => {
-                    let _ = app
-                        .notification()
-                        .builder()
-                        .title("Download abgeschlossen")
-                        .body(file_name)
-                        .show();
+                    let _ = app.notification().builder().title("Download abgeschlossen").body(file_name).show();
                 }
                 EngineEvent::Failed { file_name, error, .. } if settings.notify_on_error => {
                     let _ = app

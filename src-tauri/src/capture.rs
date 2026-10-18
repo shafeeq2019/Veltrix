@@ -89,7 +89,12 @@ fn offer_file_name(o: &Offer) -> String {
     }
 }
 
-fn add_request(o: &Offer, start: StartMode, file_name: Option<String>, save_dir: Option<PathBuf>) -> AddDownloadRequest {
+fn add_request(
+    o: &Offer,
+    start: StartMode,
+    file_name: Option<String>,
+    save_dir: Option<PathBuf>,
+) -> AddDownloadRequest {
     AddDownloadRequest {
         url: o.url.clone(),
         file_name: Some(file_name.unwrap_or_else(|| offer_file_name(o))),
@@ -105,7 +110,13 @@ fn add_request(o: &Offer, start: StartMode, file_name: Option<String>, save_dir:
 
 impl Offers {
     /// Entry point for every authenticated IPC request.
-    pub async fn handle(&self, app: AppHandle, manager: Manager, origin: Option<String>, req: Envelope<Request>) -> Response {
+    pub async fn handle(
+        &self,
+        app: AppHandle,
+        manager: Manager,
+        origin: Option<String>,
+        req: Envelope<Request>,
+    ) -> Response {
         match req.body {
             Request::Ping => Response::Pong { app_version: env!("CARGO_PKG_VERSION").into() },
             Request::GetConfig => Response::Config { config: capture_config(&manager) },
@@ -181,7 +192,12 @@ impl Offers {
     }
 
     /// Called by the frontend when the user answered the dialog.
-    pub fn resolve(&self, manager: &Manager, offer_id: &str, r: OfferResolution) -> Result<(), odm_core::DownloadError> {
+    pub fn resolve(
+        &self,
+        manager: &Manager,
+        offer_id: &str,
+        r: OfferResolution,
+    ) -> Result<(), odm_core::DownloadError> {
         let Some(pending) = self.lock().remove(offer_id) else {
             return Err(odm_core::DownloadError::invalid_state("This download offer has expired"));
         };

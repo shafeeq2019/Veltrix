@@ -51,15 +51,16 @@ async fn relays_to_app_and_validates() {
     let data = dir.path().to_path_buf();
     let seen_origin = Arc::new(std::sync::Mutex::new(None));
     let seen = seen_origin.clone();
-    let handler: Arc<dyn odm_ipc::server::Handler> = Arc::new(move |origin: Option<String>, req: Envelope<Request>| -> HandlerFuture {
-        *seen.lock().unwrap() = origin;
-        Box::pin(async move {
-            match req.body {
-                Request::Offer(_) => Response::Decision { decision: Decision::Accepted },
-                _ => Response::Pong { app_version: "t".into() },
-            }
-        })
-    });
+    let handler: Arc<dyn odm_ipc::server::Handler> =
+        Arc::new(move |origin: Option<String>, req: Envelope<Request>| -> HandlerFuture {
+            *seen.lock().unwrap() = origin;
+            Box::pin(async move {
+                match req.body {
+                    Request::Offer(_) => Response::Decision { decision: Decision::Accepted },
+                    _ => Response::Pong { app_version: "t".into() },
+                }
+            })
+        });
     let d2 = data.clone();
     tokio::spawn(async move { serve(&d2, handler).await.unwrap() });
     tokio::time::sleep(Duration::from_millis(200)).await;

@@ -218,11 +218,7 @@ pub async fn send(client: &Client, spec: &RequestSpec<'_>) -> Result<(Response, 
         let meta = ResponseMeta::from_response(&resp);
         return Ok((resp, meta));
     }
-    let retry_after = resp
-        .headers()
-        .get(header::RETRY_AFTER)
-        .and_then(|v| v.to_str().ok())
-        .and_then(parse_retry_after);
+    let retry_after = resp.headers().get(header::RETRY_AFTER).and_then(|v| v.to_str().ok()).and_then(parse_retry_after);
     Err(DownloadError::from_http_status(status.as_u16(), retry_after))
 }
 

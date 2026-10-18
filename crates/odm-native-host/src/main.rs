@@ -43,7 +43,8 @@ fn main() {
             Err(FrameError::Closed) => break,
             Err(e) => {
                 eprintln!("odm-native-host: cannot read message: {e}");
-                let _ = framing::write_message(&mut output, &error("invalid", IpcErrorCode::BadRequest, &e.to_string()));
+                let _ =
+                    framing::write_message(&mut output, &error("invalid", IpcErrorCode::BadRequest, &e.to_string()));
                 break;
             }
         };
@@ -71,7 +72,12 @@ fn main() {
     }
 }
 
-fn forward(client: &Client, origin: Option<String>, request: Envelope<Request>, launched: &mut bool) -> Envelope<Response> {
+fn forward(
+    client: &Client,
+    origin: Option<String>,
+    request: Envelope<Request>,
+    launched: &mut bool,
+) -> Envelope<Response> {
     let id = request.id.clone();
     // Only a concrete download offer may start the app; config lookups at
     // browser start must not launch it.

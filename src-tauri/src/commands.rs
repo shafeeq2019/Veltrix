@@ -132,7 +132,12 @@ pub fn move_in_queue(state: State<'_, AppState>, id: DownloadId, delta: i64) -> 
 }
 
 #[tauri::command]
-pub fn set_credentials(state: State<'_, AppState>, id: DownloadId, username: String, password: Option<String>) -> CmdResult<()> {
+pub fn set_credentials(
+    state: State<'_, AppState>,
+    id: DownloadId,
+    username: String,
+    password: Option<String>,
+) -> CmdResult<()> {
     Ok(state.manager.set_credentials(id, username, password)?)
 }
 
