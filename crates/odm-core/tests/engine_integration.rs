@@ -413,3 +413,27 @@ async fn many_parallel_downloads() {
     // the global connection cap holds across downloads
     assert!(server.stats.max_concurrent.load(Ordering::SeqCst) <= 8);
 }
+
+/// Regression: synchronous Tauri commands run on the macOS main thread, which
+/// has no Tokio context. Starting a download from there must not panic.
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn commands_work_from_threads_without_runtime() {
+    let server = TestServer::start().await;
+    let env = env();
+    let m = manager(&env, |_| {});
+    let url = server.url("/slow/400000");
+    let m2 = m.clone();
+    let id = std::thread::spawn(move || {
+        assert!(tokio::runtime::Handle::try_current().is_err(), "test thread must not have a runtime");
+        let id = m2.add(AddDownloadRequest { url, ..Default::default() }).unwrap().download.id;
+        m2.pause(id).unwrap();
+        id
+    })
+    .join()
+    .expect("add/pause from a plain thread panicked");
+    wait_for(&m, id, &[DownloadStatus::Paused], 10).await;
+    let m3 = m.clone();
+    std::thread::spawn(move || m3.resume(id).unwrap()).join().expect("resume from a plain thread panicked");
+    let v = wait_for(&m, id, &[DownloadStatus::Completed], 30).await;
+    assert_file(&v.download.target_path(), 400_000, 0);
+}

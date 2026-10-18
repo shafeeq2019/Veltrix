@@ -40,6 +40,10 @@ struct Inner {
     peak_bps: AtomicU64,
     bandwidth_estimate: AtomicU64,
     wake: Notify,
+    /// Runtime the manager was started in. Tasks are always spawned on it,
+    /// because commands may be called from threads without a Tokio context
+    /// (e.g. the macOS main thread for synchronous Tauri commands).
+    runtime: tokio::runtime::Handle,
     shutting_down: AtomicBool,
     schedule_state: Mutex<ScheduleState>,
 }
@@ -117,6 +121,7 @@ impl Manager {
             peak_bps: AtomicU64::new(0),
             bandwidth_estimate: AtomicU64::new(estimate),
             wake: Notify::new(),
+            runtime: tokio::runtime::Handle::current(),
             shutting_down: AtomicBool::new(false),
             schedule_state: Mutex::new(ScheduleState::default()),
         });
@@ -174,7 +179,7 @@ impl Manager {
 
     fn spawn_loops(&self) {
         let weak = Arc::downgrade(&self.inner);
-        tokio::spawn(async move {
+        self.inner.runtime.spawn(async move {
             let mut interval = tokio::time::interval(REPORT_INTERVAL);
             loop {
                 interval.tick().await;
@@ -183,7 +188,7 @@ impl Manager {
             }
         });
         let weak = Arc::downgrade(&self.inner);
-        tokio::spawn(async move {
+        self.inner.runtime.spawn(async move {
             loop {
                 let Some(inner) = weak.upgrade() else { break };
                 let manager = Manager { inner };
@@ -681,7 +686,7 @@ impl Manager {
         let mut record = e.d.clone();
         let view = e.view();
         let task_weak = weak;
-        let handle = tokio::spawn(async move {
+        let handle = self.inner.runtime.spawn(async move {
             let result = engine::run(ctx, &mut record).await;
             if let Some(inner) = task_weak.upgrade() {
                 Manager { inner }.on_task_finished(id, record, result);
