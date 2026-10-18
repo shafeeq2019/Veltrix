@@ -29,7 +29,11 @@ function build(triple) {
 }
 
 if (target === "universal-apple-darwin") {
-  const parts = ["aarch64-apple-darwin", "x86_64-apple-darwin"].map(build);
+  const triples = ["aarch64-apple-darwin", "x86_64-apple-darwin"];
+  const parts = triples.map(build);
+  // Tauri compiles each architecture separately and needs a sidecar for
+  // each, plus the merged one for the bundle.
+  triples.forEach((t, i) => copyFileSync(parts[i], join(outDir, `odm-native-host-${t}`)));
   const out = join(outDir, "odm-native-host-universal-apple-darwin");
   execFileSync("lipo", ["-create", "-output", out, ...parts], { stdio: "inherit" });
   console.log(`sidecar → ${out}`);
