@@ -97,7 +97,9 @@ fn add_request(
 ) -> AddDownloadRequest {
     AddDownloadRequest {
         url: o.url.clone(),
-        file_name: Some(file_name.unwrap_or_else(|| offer_file_name(o))),
+        // Without a name from the browser or the user, leave it open so the
+        // server's Content-Disposition can still provide the real one.
+        file_name: file_name.or_else(|| o.filename.clone().filter(|n| !n.trim().is_empty())),
         save_dir,
         referrer: o.referrer.clone(),
         start,
@@ -205,7 +207,12 @@ impl Offers {
             OfferAction::Ignore => Decision::Ignored,
             OfferAction::Now | OfferAction::Queue => {
                 let start = if r.action == OfferAction::Now { StartMode::Now } else { StartMode::Queue };
-                let req = add_request(&pending.offer, start, r.file_name.clone(), r.save_dir.clone());
+                // An unchanged guess is not a user choice.
+                let chosen = r
+                    .file_name
+                    .clone()
+                    .filter(|n| pending.offer.filename.is_some() || *n != offer_file_name(&pending.offer));
+                let req = add_request(&pending.offer, start, chosen, r.save_dir.clone());
                 match manager.add(req) {
                     Ok(_) => {
                         if r.action == OfferAction::Now {

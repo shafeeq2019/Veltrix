@@ -191,6 +191,9 @@ export interface Settings {
   notify_on_complete: boolean;
   notify_on_error: boolean;
   prevent_sleep: boolean;
+  remote_view_enabled: boolean;
+  remote_view_port: number;
+  remote_view_token: string;
   minimize_to_tray: boolean;
   theme: Theme;
   language: string;
@@ -245,4 +248,12 @@ export interface IntegrationStatus {
 export interface CmdError {
   code: ErrorCode;
   message: string;
+}
+
+export interface RemoteInfo {
+  enabled: boolean;
+  running: boolean;
+  error: string | null;
+  urls: string[];
+  qr_svg: string | null;
 }

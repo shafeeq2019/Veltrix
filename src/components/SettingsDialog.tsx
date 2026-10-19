@@ -6,14 +6,16 @@ import { api, errorMessage } from "../lib/api";
 import { fromBytesPerSecond, toBytesPerSecond, type SpeedUnit } from "../lib/format";
 import { useStore } from "../lib/store";
 import type { IntegrationStatus, Settings, SpeedMode } from "../lib/types";
+import { RemoteViewPanel } from "./RemoteViewPanel";
 import { Button, Dialog, Field, Input, Select, Switch } from "./ui";
 
-type Tab = "general" | "speed" | "queue" | "browser" | "categories";
+type Tab = "general" | "speed" | "queue" | "browser" | "remote" | "categories";
 const TABS: { key: Tab; label: string }[] = [
   { key: "general", label: "Allgemein" },
   { key: "speed", label: "Geschwindigkeit" },
   { key: "queue", label: "Warteschlange" },
   { key: "browser", label: "Browser" },
+  { key: "remote", label: "Handy" },
   { key: "categories", label: "Kategorien" },
 ];
 const DAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -66,7 +68,10 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
     setLimitValue(l.value);
     setLimitUnit(l.unit);
     api.integrationStatus().then(setIntegration).catch(() => setIntegration(null));
-  }, [open, current]);
+    // Only when the dialog opens: later settings updates (e.g. from the phone
+    // tab) must not discard unsaved edits in the draft.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, current === null]);
 
   if (!draft) return null;
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) => setDraft({ ...draft, [k]: v });
@@ -77,7 +82,15 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
 
   const save = async () => {
     try {
-      const next = { ...draft, speed_limit_bps: toBytesPerSecond(limitValue, limitUnit) || draft.speed_limit_bps };
+      const latest = useStore.getState().settings;
+      const next = {
+        ...draft,
+        speed_limit_bps: toBytesPerSecond(limitValue, limitUnit) || draft.speed_limit_bps,
+        // The phone tab saves immediately; keep its values instead of the older draft.
+        remote_view_enabled: latest?.remote_view_enabled ?? draft.remote_view_enabled,
+        remote_view_port: latest?.remote_view_port ?? draft.remote_view_port,
+        remote_view_token: latest?.remote_view_token ?? draft.remote_view_token,
+      };
       const saved = await api.updateSettings(next);
       setSettings(saved);
       toast("success", "Einstellungen gespeichert");
@@ -295,6 +308,8 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
               </div>
             </>
           )}
+
+          {tab === "remote" && <RemoteViewPanel />}
 
           {tab === "categories" && (
             <>

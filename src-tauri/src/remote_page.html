@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Downloads">
+<meta name="theme-color" content="#0f1216">
+<title>OpenDownload – Downloads</title>
+<style>
+  :root { --bg:#f6f7f9; --panel:#fff; --line:#e3e6eb; --fg:#131820; --muted:#5e6875; --accent:#2563eb; --ok:#15803d; --warn:#b45309; --err:#c2283b; color-scheme: light dark; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0f1216; --panel:#161a20; --line:#2a313b; --fg:#e7ebf0; --muted:#8f9aa8; --accent:#4f8bff; --ok:#3fbf6f; --warn:#e0a043; --err:#f0576c; } }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.4 -apple-system, system-ui, "Segoe UI", Roboto, sans-serif; padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+  header { padding:18px 16px 8px; display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+  h1 { font-size:20px; margin:0; }
+  #updated { color:var(--muted); font-size:12px; }
+  .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; padding:8px 16px; }
+  .stat { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; }
+  .stat .l { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .stat .v { font-size:20px; font-weight:600; font-variant-numeric:tabular-nums; }
+  .list { padding:8px 16px 24px; display:flex; flex-direction:column; gap:8px; }
+  .item { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px; }
+  .name { font-weight:600; word-break:break-word; }
+  .bar { height:6px; background:var(--line); border-radius:4px; overflow:hidden; margin:8px 0 6px; }
+  .bar > div { height:100%; background:var(--accent); border-radius:4px; transition:width .6s ease; }
+  .bar.done > div { background:var(--ok); } .bar.fail > div { background:var(--err); }
+  .meta { display:flex; justify-content:space-between; gap:8px; font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .s-downloading,.s-connecting { color:var(--accent); } .s-completed { color:var(--ok); } .s-failed { color:var(--err); } .s-paused,.s-canceled { color:var(--warn); }
+  .msg { margin:24px 16px; padding:16px; border-radius:12px; background:var(--panel); border:1px solid var(--line); color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+<header><h1>Downloads</h1><span id="updated">verbinde…</span></header>
+<section class="stats" id="stats" hidden>
+  <div class="stat"><div class="l">Geschwindigkeit</div><div class="v" id="speed">–</div></div>
+  <div class="stat"><div class="l">Aktiv</div><div class="v" id="active">0</div></div>
+  <div class="stat"><div class="l">Abgeschlossen</div><div class="v" id="completed">0</div></div>
+  <div class="stat"><div class="l">Fehlgeschlagen</div><div class="v" id="failed">0</div></div>
+</section>
+<div id="msg" class="msg" hidden></div>
+<main class="list" id="list"></main>
+<script>
+(() => {
+  // The token comes in the URL fragment (never sent to the server in requests or logs)
+  // and is remembered for the home-screen shortcut.
+  const frag = new URLSearchParams(location.hash.slice(1)).get("t");
+  if (frag) { try { localStorage.setItem("odm-token", frag); } catch (e) {} history.replaceState(null, "", location.pathname); }
+  let token = frag; try { token = token || localStorage.getItem("odm-token"); } catch (e) {}
+
+  const LABEL = { waiting: "In Warteschlange", connecting: "Verbinde…", downloading: "Lädt", paused: "Pausiert", completed: "Fertig", failed: "Fehlgeschlagen", canceled: "Abgebrochen" };
+  const $ = (id) => document.getElementById(id);
+  const bytes = (b) => { if (b == null) return "–"; const u = ["B","KB","MB","GB","TB"]; let i = 0; while (b >= 1024 && i < 4) { b /= 1024; i++; } return (i ? b.toFixed(b >= 100 ? 0 : 1).replace(".", ",") : b) + " " + u[i]; };
+  const speed = (s) => s > 0 ? bytes(s) + "/s" : "–";
+  const dur = (s) => { if (s == null) return ""; if (s < 60) return s + " s"; const m = Math.floor(s / 60); if (m < 60) return m + " min"; const h = Math.floor(m / 60); return h + " h " + (m % 60) + " min"; };
+  const msg = (t) => { $("msg").textContent = t; $("msg").hidden = !t; };
+
+  function render(st) {
+    $("stats").hidden = false; msg("");
+    $("speed").textContent = speed(st.total_speed);
+    $("active").textContent = st.active; $("completed").textContent = st.completed; $("failed").textContent = st.failed;
+    const list = $("list"); list.replaceChildren();
+    if (!st.downloads.length) { msg("Keine Downloads."); return; }
+    for (const d of st.downloads) {
+      const pct = d.status === "completed" ? 100 : d.total ? Math.min(100, d.downloaded / d.total * 100) : null;
+      const el = document.createElement("div"); el.className = "item";
+      const name = document.createElement("div"); name.className = "name"; name.textContent = d.name;
+      const bar = document.createElement("div"); bar.className = "bar" + (d.status === "completed" ? " done" : d.status === "failed" ? " fail" : "");
+      const fill = document.createElement("div"); fill.style.width = (pct ?? 0) + "%"; bar.append(fill);
+      const m1 = document.createElement("div"); m1.className = "meta";
+      const st1 = document.createElement("span"); st1.className = "s-" + d.status; st1.textContent = LABEL[d.status] || d.status;
+      const pr = document.createElement("span"); pr.textContent = pct == null ? bytes(d.downloaded) : pct.toFixed(1).replace(".", ",") + " %";
+      m1.append(st1, pr);
+      const m2 = document.createElement("div"); m2.className = "meta";
+      const sz = document.createElement("span"); sz.textContent = d.status === "completed" ? bytes(d.total) : bytes(d.downloaded) + " / " + bytes(d.total);
+      const sp = document.createElement("span");
+      sp.textContent = (d.status === "downloading" || d.status === "connecting") ? speed(d.speed) + (d.eta != null ? " · noch " + dur(d.eta) : "") : "";
+      m2.append(sz, sp);
+      el.append(name, bar, m1, m2); list.append(el);
+    }
+  }
+
+  let failures = 0;
+  async function tick() {
+    if (!token) { $("updated").textContent = "kein Zugang"; msg("Kein Zugangsschlüssel. Bitte den QR-Code in der App (Einstellungen → Handy) erneut scannen."); return; }
+    try {
+      const r = await fetch("/api/state", { headers: { Authorization: "Bearer " + token }, cache: "no-store" });
+      if (r.status === 401) { $("stats").hidden = true; $("updated").textContent = "kein Zugang"; msg("Zugang abgelehnt – der Schlüssel wurde geändert. Bitte den QR-Code erneut scannen."); return; }
+      if (!r.ok) throw new Error(r.status);
+      render(await r.json()); failures = 0;
+      $("updated").textContent = "aktualisiert " + new Date().toLocaleTimeString("de-DE");
+    } catch (e) {
+      failures++;
+      $("updated").textContent = "keine Verbindung";
+      if (failures > 2) msg("Keine Verbindung zum Mac. Ist die App geöffnet und das Handy im selben WLAN?");
+    }
+    setTimeout(tick, document.hidden ? 10000 : 2000);
+  }
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) { failures = 0; } });
+  tick();
+})();
+</script>
+</body>
+</html>

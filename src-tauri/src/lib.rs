@@ -4,6 +4,7 @@ mod capture;
 mod commands;
 mod native_host;
 mod power;
+mod remote;
 mod tray;
 
 use odm_core::model::EngineEvent;
@@ -63,6 +64,9 @@ pub fn run() {
             let offers = capture::Offers::default();
             app.manage(AppState { manager: manager.clone(), data_dir: data_dir.clone() });
             app.manage(offers.clone());
+            let remote = remote::RemoteServer::default();
+            remote.apply(&manager, &manager.settings());
+            app.manage(remote);
 
             forward_events(app.handle().clone(), manager.clone());
             start_ipc(app.handle().clone(), manager.clone(), offers, data_dir.clone());
@@ -114,6 +118,8 @@ pub fn run() {
             commands::integration_status,
             commands::register_browser_integration,
             commands::unregister_browser_integration,
+            commands::remote_view_info,
+            commands::remote_view_reset_token,
         ])
         .build(tauri::generate_context!())
         .expect("error while building the application")

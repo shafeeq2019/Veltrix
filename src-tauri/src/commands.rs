@@ -2,6 +2,7 @@
 
 use crate::capture::{OfferResolution, OfferView, Offers};
 use crate::native_host::{self, IntegrationStatus};
+use crate::remote::{self, RemoteInfo, RemoteServer};
 use crate::AppState;
 use odm_core::category::is_executable_type;
 use odm_core::model::{AddDownloadRequest, DownloadId, DownloadView, Priority, ProbeInfo};
@@ -157,12 +158,35 @@ pub fn get_settings(state: State<'_, AppState>) -> Settings {
 }
 
 #[tauri::command]
-pub fn update_settings(state: State<'_, AppState>, settings: Settings) -> CmdResult<Settings> {
+pub fn update_settings(
+    state: State<'_, AppState>,
+    remote: State<'_, RemoteServer>,
+    mut settings: Settings,
+) -> CmdResult<Settings> {
     let old_ids = state.manager.settings().chromium_extension_ids;
+    if settings.remote_view_enabled && settings.remote_view_token.trim().is_empty() {
+        settings.remote_view_token = remote::new_token();
+    }
     let new = state.manager.update_settings(settings)?;
     if new.chromium_extension_ids != old_ids && native_host::host_executable().is_some() {
         let _ = native_host::register(&state.data_dir, &new.chromium_extension_ids);
     }
+    remote.apply(&state.manager, &new);
+    Ok(new)
+}
+
+#[tauri::command]
+pub fn remote_view_info(state: State<'_, AppState>, remote: State<'_, RemoteServer>) -> RemoteInfo {
+    remote.info(&state.manager.settings())
+}
+
+/// Issue a new secret; phones that scanned the old QR code lose access.
+#[tauri::command]
+pub fn remote_view_reset_token(state: State<'_, AppState>, remote: State<'_, RemoteServer>) -> CmdResult<Settings> {
+    let mut s = state.manager.settings();
+    s.remote_view_token = remote::new_token();
+    let new = state.manager.update_settings(s)?;
+    remote.apply(&state.manager, &new);
     Ok(new)
 }
 

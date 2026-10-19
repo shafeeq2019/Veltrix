@@ -13,6 +13,7 @@ import type {
   OfferView,
   Priority,
   ProbeInfo,
+  RemoteInfo,
   Settings,
 } from "./types";
 
@@ -57,6 +58,8 @@ export const api = {
     invoke<void>("resolve_offer", { offerId, resolution }),
   pendingOffers: () => invoke<OfferView[]>("pending_offers"),
   integrationStatus: () => invoke<IntegrationStatus>("integration_status"),
+  remoteViewInfo: () => invoke<RemoteInfo>("remote_view_info"),
+  remoteViewResetToken: () => invoke<Settings>("remote_view_reset_token"),
   registerIntegration: () => invoke<IntegrationStatus>("register_browser_integration"),
   unregisterIntegration: () => invoke<IntegrationStatus>("unregister_browser_integration"),
 };

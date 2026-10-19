@@ -52,6 +52,18 @@ manuell bzw. nur per Build geprüft.
 | Native Messaging mit Token-Authentifizierung, App-Autostart | ✅ |
 | Registrierung für Chrome, Edge, Brave, Vivaldi, Chromium, Firefox (Windows-Registry / macOS-Manifeste) | ☑️ |
 
+## Handy-Ansicht (nur Anzeige)
+
+| Funktion | Status |
+|---|---|
+| Statusseite für Smartphones im Heimnetz (Einstellungen → Handy, standardmäßig aus) | ✅ |
+| Einrichtung per QR-Code, Zugriff nur mit 256-Bit-Schlüssel, Schlüssel erneuerbar | ✅ |
+| Zeigt nur Dateiname, Status, Fortschritt, Geschwindigkeit, Restzeit – keine URLs, Ordner oder Steuerung | ✅ |
+
+Einschränkungen: nur im selben Netzwerk (unterwegs per VPN wie Tailscale), Übertragung im
+Heimnetz per HTTP ohne TLS – der Schlüssel könnte in einem fremden WLAN mitgelesen werden,
+daher nur in vertrauenswürdigen Netzen aktivieren.
+
 ## Oberfläche
 
 Dashboard, Liste mit Fortschritt/Geschwindigkeit/ETA/Status, Kategorien (Status, Typ,

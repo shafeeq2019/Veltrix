@@ -25,6 +25,16 @@
 | Ressourcenerschöpfung | Globales Verbindungslimit (Semaphore, Standard 32, max. 128), max. 32 Segmente pro Download, begrenzte Wiederholungen mit Backoff, Puffer ≤ 512 KiB pro Verbindung, Einstellungen werden beim Laden auf sichere Bereiche begrenzt. |
 | Beschädigte Dateien | Schreiben in `.odmpart`, persistierter Fortschritt nur nach `fsync`, Validierung über ETag/Last-Modified/Content-Range, Größenprüfung, optional SHA-256, atomares Umbenennen. |
 
+## Handy-Ansicht
+
+Standardmäßig aus. Eingeschaltet lauscht die App auf einem Port im lokalen Netz und liefert
+ausschließlich eine Seite und `GET /api/state` (nur lesend). Jede Abfrage braucht den
+64-stelligen Schlüssel aus dem QR-Code (konstantzeitiger Vergleich); er steht im URL-Fragment
+und wird daher nicht an Server oder Logs übertragen. Die Antwort enthält keine URLs, Pfade
+oder Zugangsdaten. Strikte CSP, `no-referrer`, kein Framing. Da im Heimnetz kein TLS
+verwendet wird, die Funktion nur in vertrauenswürdigen Netzen nutzen; „Neuen Schlüssel
+erstellen“ sperrt alle bisher verbundenen Geräte aus.
+
 ## Zugangsdaten
 
 * HTTP-Basic-Anmeldedaten und Cookies werden ausschließlich im Arbeitsspeicher gehalten,

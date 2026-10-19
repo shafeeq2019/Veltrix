@@ -121,6 +121,11 @@ pub struct Settings {
     pub notify_on_error: bool,
     /// Prevent idle system sleep while downloads are running.
     pub prevent_sleep: bool,
+    /// Read-only status page for phones in the local network.
+    pub remote_view_enabled: bool,
+    pub remote_view_port: u16,
+    /// Secret embedded in the QR code (64 hex chars); empty = not generated yet.
+    pub remote_view_token: String,
     pub minimize_to_tray: bool,
     pub theme: Theme,
     pub language: String,
@@ -161,6 +166,9 @@ impl Default for Settings {
             notify_on_complete: true,
             notify_on_error: true,
             prevent_sleep: true,
+            remote_view_enabled: false,
+            remote_view_port: 8765,
+            remote_view_token: String::new(),
             minimize_to_tray: true,
             theme: Theme::System,
             language: "de".into(),
@@ -222,6 +230,12 @@ impl Settings {
         // Chromium ids are exactly 32 letters a-p.
         self.chromium_extension_ids.retain(|id| id.len() == 32 && id.chars().all(|c| ('a'..='p').contains(&c)));
         self.chromium_extension_ids.dedup();
+        if self.remote_view_port < 1024 {
+            self.remote_view_port = 8765;
+        }
+        if !(self.remote_view_token.len() == 64 && self.remote_view_token.chars().all(|c| c.is_ascii_hexdigit())) {
+            self.remote_view_token.clear();
+        }
     }
 
     pub fn effective_limits(&self) -> EffectiveLimits {
