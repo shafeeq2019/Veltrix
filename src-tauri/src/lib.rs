@@ -2,6 +2,7 @@
 
 mod capture;
 mod commands;
+mod i18n;
 mod native_host;
 mod power;
 mod remote;
@@ -71,7 +72,7 @@ pub fn run() {
             forward_events(app.handle().clone(), manager.clone());
             start_ipc(app.handle().clone(), manager.clone(), offers, data_dir.clone());
             keep_awake_while_downloading(manager.clone());
-            tray::create(app.handle())?;
+            tray::create(app.handle(), i18n::Lang::from_settings(&manager.settings()))?;
 
             if native_host::host_executable().is_some() {
                 if let Err(e) = native_host::register(&data_dir, &manager.settings().chromium_extension_ids) {
@@ -165,20 +166,22 @@ fn forward_events(app: tauri::AppHandle, manager: Manager) {
                 Err(_) => break,
             };
             let settings = manager.settings();
+            let lang = i18n::Lang::from_settings(&settings);
             match &event {
                 EngineEvent::Completed { file_name, .. } if settings.notify_on_complete => {
-                    let _ = app.notification().builder().title("Download abgeschlossen").body(file_name).show();
+                    let title = i18n::tr(lang, i18n::Text::NotifyCompleted);
+                    let _ = app.notification().builder().title(title).body(file_name).show();
                 }
                 EngineEvent::Failed { file_name, error, .. } if settings.notify_on_error => {
                     let _ = app
                         .notification()
                         .builder()
-                        .title("Download fehlgeschlagen")
+                        .title(i18n::tr(lang, i18n::Text::NotifyFailed))
                         .body(format!("{file_name}: {}", error.message))
                         .show();
                 }
                 EngineEvent::Progress { total_speed, items } => {
-                    tray::update_tooltip(&app, *total_speed, items.len());
+                    tray::update_tooltip(&app, lang, *total_speed, items.len());
                 }
                 _ => {}
             }

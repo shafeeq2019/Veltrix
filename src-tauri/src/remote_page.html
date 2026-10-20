@@ -33,12 +33,12 @@
 </style>
 </head>
 <body>
-<header><h1>Downloads</h1><span id="updated">verbinde…</span></header>
+<header><h1>Downloads</h1><span id="updated"></span></header>
 <section class="stats" id="stats" hidden>
-  <div class="stat"><div class="l">Geschwindigkeit</div><div class="v" id="speed">–</div></div>
-  <div class="stat"><div class="l">Aktiv</div><div class="v" id="active">0</div></div>
-  <div class="stat"><div class="l">Abgeschlossen</div><div class="v" id="completed">0</div></div>
-  <div class="stat"><div class="l">Fehlgeschlagen</div><div class="v" id="failed">0</div></div>
+  <div class="stat"><div class="l" data-t="speed"></div><div class="v" id="speed">–</div></div>
+  <div class="stat"><div class="l" data-t="active"></div><div class="v" id="active">0</div></div>
+  <div class="stat"><div class="l" data-t="completed"></div><div class="v" id="completed">0</div></div>
+  <div class="stat"><div class="l" data-t="failed"></div><div class="v" id="failed">0</div></div>
 </section>
 <div id="msg" class="msg" hidden></div>
 <main class="list" id="list"></main>
@@ -50,9 +50,36 @@
   if (frag) { try { localStorage.setItem("odm-token", frag); } catch (e) {} history.replaceState(null, "", location.pathname); }
   let token = frag; try { token = token || localStorage.getItem("odm-token"); } catch (e) {}
 
-  const LABEL = { waiting: "In Warteschlange", connecting: "Verbinde…", downloading: "Lädt", paused: "Pausiert", completed: "Fertig", failed: "Fehlgeschlagen", canceled: "Abgebrochen" };
+  // Texts follow the phone's language (German or English).
+  const TEXT = {
+    de: {
+      speed: "Geschwindigkeit", active: "Aktiv", completed: "Abgeschlossen", failed: "Fehlgeschlagen",
+      status: { waiting: "In Warteschlange", connecting: "Verbinde…", downloading: "Lädt", paused: "Pausiert", completed: "Fertig", failed: "Fehlgeschlagen", canceled: "Abgebrochen" },
+      connecting: "verbinde…", remaining: "noch {t}", noDownloads: "Keine Downloads.", noAccess: "kein Zugang",
+      noToken: "Kein Zugangsschlüssel. Bitte den QR-Code in der App (Einstellungen → Handy) erneut scannen.",
+      denied: "Zugang abgelehnt – der Schlüssel wurde geändert. Bitte den QR-Code erneut scannen.",
+      updated: "aktualisiert {t}", offline: "keine Verbindung", unreachable: "Keine Verbindung zum Mac. Ist die App geöffnet und das Handy im selben WLAN?",
+    },
+    en: {
+      speed: "Speed", active: "Active", completed: "Completed", failed: "Failed",
+      status: { waiting: "Queued", connecting: "Connecting…", downloading: "Downloading", paused: "Paused", completed: "Done", failed: "Failed", canceled: "Canceled" },
+      connecting: "connecting…", remaining: "{t} left", noDownloads: "No downloads.", noAccess: "no access",
+      noToken: "No access key. Please scan the QR code in the app again (Settings → Phone).",
+      denied: "Access denied – the key was changed. Please scan the QR code again.",
+      updated: "updated {t}", offline: "no connection", unreachable: "Cannot reach the Mac. Is the app open and the phone on the same Wi-Fi?",
+    },
+  };
+  const locale = navigator.language || "en";
+  const lang = locale.toLowerCase().startsWith("de") ? "de" : "en";
+  const T = TEXT[lang];
+  document.documentElement.lang = lang;
+  for (const el of document.querySelectorAll("[data-t]")) el.textContent = T[el.dataset.t];
+  const LABEL = T.status;
   const $ = (id) => document.getElementById(id);
-  const bytes = (b) => { if (b == null) return "–"; const u = ["B","KB","MB","GB","TB"]; let i = 0; while (b >= 1024 && i < 4) { b /= 1024; i++; } return (i ? b.toFixed(b >= 100 ? 0 : 1).replace(".", ",") : b) + " " + u[i]; };
+  $("updated").textContent = T.connecting;
+  const nf = [0, 1].map((d) => new Intl.NumberFormat(locale, { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: false }));
+  const pctText = (p) => nf[1].format(p) + (lang === "de" ? " %" : "%");
+  const bytes = (b) => { if (b == null) return "–"; const u = ["B","KB","MB","GB","TB"]; let i = 0; while (b >= 1024 && i < 4) { b /= 1024; i++; } return (i ? nf[b >= 100 ? 0 : 1].format(b) : b) + " " + u[i]; };
   const speed = (s) => s > 0 ? bytes(s) + "/s" : "–";
   const dur = (s) => { if (s == null) return ""; if (s < 60) return s + " s"; const m = Math.floor(s / 60); if (m < 60) return m + " min"; const h = Math.floor(m / 60); return h + " h " + (m % 60) + " min"; };
   const msg = (t) => { $("msg").textContent = t; $("msg").hidden = !t; };
@@ -62,7 +89,7 @@
     $("speed").textContent = speed(st.total_speed);
     $("active").textContent = st.active; $("completed").textContent = st.completed; $("failed").textContent = st.failed;
     const list = $("list"); list.replaceChildren();
-    if (!st.downloads.length) { msg("Keine Downloads."); return; }
+    if (!st.downloads.length) { msg(T.noDownloads); return; }
     for (const d of st.downloads) {
       const pct = d.status === "completed" ? 100 : d.total ? Math.min(100, d.downloaded / d.total * 100) : null;
       const el = document.createElement("div"); el.className = "item";
@@ -71,12 +98,12 @@
       const fill = document.createElement("div"); fill.style.width = (pct ?? 0) + "%"; bar.append(fill);
       const m1 = document.createElement("div"); m1.className = "meta";
       const st1 = document.createElement("span"); st1.className = "s-" + d.status; st1.textContent = LABEL[d.status] || d.status;
-      const pr = document.createElement("span"); pr.textContent = pct == null ? bytes(d.downloaded) : pct.toFixed(1).replace(".", ",") + " %";
+      const pr = document.createElement("span"); pr.textContent = pct == null ? bytes(d.downloaded) : pctText(pct);
       m1.append(st1, pr);
       const m2 = document.createElement("div"); m2.className = "meta";
       const sz = document.createElement("span"); sz.textContent = d.status === "completed" ? bytes(d.total) : bytes(d.downloaded) + " / " + bytes(d.total);
       const sp = document.createElement("span");
-      sp.textContent = (d.status === "downloading" || d.status === "connecting") ? speed(d.speed) + (d.eta != null ? " · noch " + dur(d.eta) : "") : "";
+      sp.textContent = (d.status === "downloading" || d.status === "connecting") ? speed(d.speed) + (d.eta != null ? " · " + T.remaining.replace("{t}", dur(d.eta)) : "") : "";
       m2.append(sz, sp);
       el.append(name, bar, m1, m2); list.append(el);
     }
@@ -84,17 +111,17 @@
 
   let failures = 0;
   async function tick() {
-    if (!token) { $("updated").textContent = "kein Zugang"; msg("Kein Zugangsschlüssel. Bitte den QR-Code in der App (Einstellungen → Handy) erneut scannen."); return; }
+    if (!token) { $("updated").textContent = T.noAccess; msg(T.noToken); return; }
     try {
       const r = await fetch("/api/state", { headers: { Authorization: "Bearer " + token }, cache: "no-store" });
-      if (r.status === 401) { $("stats").hidden = true; $("updated").textContent = "kein Zugang"; msg("Zugang abgelehnt – der Schlüssel wurde geändert. Bitte den QR-Code erneut scannen."); return; }
+      if (r.status === 401) { $("stats").hidden = true; $("updated").textContent = T.noAccess; msg(T.denied); return; }
       if (!r.ok) throw new Error(r.status);
       render(await r.json()); failures = 0;
-      $("updated").textContent = "aktualisiert " + new Date().toLocaleTimeString("de-DE");
+      $("updated").textContent = T.updated.replace("{t}", new Date().toLocaleTimeString(locale));
     } catch (e) {
       failures++;
-      $("updated").textContent = "keine Verbindung";
-      if (failures > 2) msg("Keine Verbindung zum Mac. Ist die App geöffnet und das Handy im selben WLAN?");
+      $("updated").textContent = T.offline;
+      if (failures > 2) msg(T.unreachable);
     }
     setTimeout(tick, document.hidden ? 10000 : 2000);
   }

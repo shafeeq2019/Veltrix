@@ -6,6 +6,7 @@
 //! status and progress — never URLs, folders, cookies or other details — and
 //! offers no way to change anything.
 
+use crate::i18n::{tr, Lang, Text};
 use odm_core::model::DownloadStatus;
 use odm_core::{Manager, Settings};
 use serde::Serialize;
@@ -59,7 +60,8 @@ impl RemoteServer {
             Ok(l) => l,
             Err(e) => {
                 tracing::warn!(port, error = %e, "remote status page cannot listen");
-                r.error = Some(format!("Port {port} ist nicht verfügbar: {e}"));
+                let text = tr(Lang::from_settings(settings), Text::PortUnavailable);
+                r.error = Some(text.replace("{port}", &port.to_string()).replace("{error}", &e.to_string()));
                 return;
             }
         };

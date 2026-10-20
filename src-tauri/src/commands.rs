@@ -159,17 +159,21 @@ pub fn get_settings(state: State<'_, AppState>) -> Settings {
 
 #[tauri::command]
 pub fn update_settings(
+    app: AppHandle,
     state: State<'_, AppState>,
     remote: State<'_, RemoteServer>,
     mut settings: Settings,
 ) -> CmdResult<Settings> {
-    let old_ids = state.manager.settings().chromium_extension_ids;
+    let old = state.manager.settings();
     if settings.remote_view_enabled && settings.remote_view_token.trim().is_empty() {
         settings.remote_view_token = remote::new_token();
     }
     let new = state.manager.update_settings(settings)?;
-    if new.chromium_extension_ids != old_ids && native_host::host_executable().is_some() {
+    if new.chromium_extension_ids != old.chromium_extension_ids && native_host::host_executable().is_some() {
         let _ = native_host::register(&state.data_dir, &new.chromium_extension_ids);
+    }
+    if new.language != old.language {
+        crate::tray::set_language(&app, crate::i18n::Lang::from_settings(&new));
     }
     remote.apply(&state.manager, &new);
     Ok(new)
