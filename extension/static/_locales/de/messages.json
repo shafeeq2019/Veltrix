@@ -1,0 +1,26 @@
+{
+  "extName": { "message": "OpenDownload Manager" },
+  "extDescription": { "message": "Übergibt Downloads an OpenDownload Manager – mit Rückfrage, Ausnahmen und ohne Tracking." },
+  "contextMenuTitle": { "message": "Mit OpenDownload Manager herunterladen" },
+  "linkNotSupported": { "message": "Dieser Link kann nicht übernommen werden (kein http/https)." },
+  "popupChecking": { "message": "Prüfe Verbindung…" },
+  "popupCaptureTitle": { "message": "Download-Erkennung" },
+  "popupCaptureHint": { "message": "Im Browser gestartete Downloads an die App übergeben" },
+  "popupCookiesTitle": { "message": "Cookies mitsenden" },
+  "popupCookiesHint": { "message": "Nur für übernommene Downloads, für Seiten mit Anmeldung. Fragt nach Berechtigung." },
+  "popupSettingsHint": { "message": "Dateitypen, Ausnahmen und automatische Übernahme stellst du in der Desktop-App unter Einstellungen → Browser ein." },
+  "statusConnected": {
+    "message": "Verbunden mit OpenDownload Manager $VERSION$",
+    "placeholders": { "version": { "content": "$1" } }
+  },
+  "statusAppNotRunning": { "message": "Die App läuft nicht. Sie wird beim nächsten erkannten Download automatisch gestartet." },
+  "statusHostMissing": { "message": "OpenDownload Manager ist nicht installiert oder die Browser-Integration ist nicht registriert." },
+  "lastResult": {
+    "message": "Letzte Übergabe: $RESULT$",
+    "placeholders": { "result": { "content": "$1" } }
+  },
+  "decision_accepted": { "message": "übernommen" },
+  "decision_queued": { "message": "zur Warteschlange hinzugefügt" },
+  "decision_ignored": { "message": "ignoriert" },
+  "decision_duplicate": { "message": "bereits in der Liste" }
+}

@@ -1,0 +1,26 @@
+{
+  "extName": { "message": "OpenDownload Manager" },
+  "extDescription": { "message": "Hands downloads over to OpenDownload Manager – with confirmation, exclusions and no tracking." },
+  "contextMenuTitle": { "message": "Download with OpenDownload Manager" },
+  "linkNotSupported": { "message": "This link cannot be taken over (not http/https)." },
+  "popupChecking": { "message": "Checking connection…" },
+  "popupCaptureTitle": { "message": "Download detection" },
+  "popupCaptureHint": { "message": "Hand downloads started in the browser over to the app" },
+  "popupCookiesTitle": { "message": "Send cookies" },
+  "popupCookiesHint": { "message": "Only for taken-over downloads, for sites that require sign-in. Asks for permission." },
+  "popupSettingsHint": { "message": "Set file types, exclusions and automatic takeover in the desktop app under Settings → Browser." },
+  "statusConnected": {
+    "message": "Connected to OpenDownload Manager $VERSION$",
+    "placeholders": { "version": { "content": "$1" } }
+  },
+  "statusAppNotRunning": { "message": "The app is not running. It starts automatically with the next detected download." },
+  "statusHostMissing": { "message": "OpenDownload Manager is not installed or the browser integration is not registered." },
+  "lastResult": {
+    "message": "Last handover: $RESULT$",
+    "placeholders": { "result": { "content": "$1" } }
+  },
+  "decision_accepted": { "message": "taken over" },
+  "decision_queued": { "message": "added to queue" },
+  "decision_ignored": { "message": "ignored" },
+  "decision_duplicate": { "message": "already in the list" }
+}

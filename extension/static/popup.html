@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <title>OpenDownload Manager</title>
@@ -10,23 +10,23 @@
       <img src="icons/icon-32.png" width="20" height="20" alt="" />
       <h1>OpenDownload Manager</h1>
     </header>
-    <section id="status" class="status" role="status">Prüfe Verbindung…</section>
+    <section id="status" class="status" role="status" data-i18n="popupChecking"></section>
     <label class="row">
       <span>
-        <strong>Download-Erkennung</strong>
-        <small>Im Browser gestartete Downloads an die App übergeben</small>
+        <strong data-i18n="popupCaptureTitle"></strong>
+        <small data-i18n="popupCaptureHint"></small>
       </span>
       <input type="checkbox" id="enabled" />
     </label>
     <label class="row">
       <span>
-        <strong>Cookies mitsenden</strong>
-        <small>Nur für übernommene Downloads, für Seiten mit Anmeldung. Fragt nach Berechtigung.</small>
+        <strong data-i18n="popupCookiesTitle"></strong>
+        <small data-i18n="popupCookiesHint"></small>
       </span>
       <input type="checkbox" id="cookies" />
     </label>
     <p id="last" class="muted"></p>
-    <p class="muted">Dateitypen, Ausnahmen und automatische Übernahme stellst du in der Desktop-App unter Einstellungen → Browser ein.</p>
+    <p class="muted" data-i18n="popupSettingsHint"></p>
     <script src="popup.js"></script>
   </body>
 </html>

@@ -12,6 +12,12 @@ const statusEl = document.getElementById("status")!;
 const enabledEl = document.getElementById("enabled") as HTMLInputElement;
 const cookiesEl = document.getElementById("cookies") as HTMLInputElement;
 const lastEl = document.getElementById("last")!;
+const DECISIONS = ["accepted", "queued", "ignored", "duplicate"];
+const msg = (key: string, ...subs: string[]) => ext.i18n.getMessage(key, subs);
+
+// Static texts from _locales (follows the browser language).
+document.documentElement.lang = ext.i18n.getUILanguage();
+document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => (el.textContent = msg(el.dataset.i18n!)));
 
 async function patch(p: Partial<Status>) {
   const stored = (await ext.storage.local.get("state")) as { state?: Record<string, unknown> };
@@ -23,15 +29,17 @@ function render(s: Status) {
   cookiesEl.checked = s.forwardCookies;
   statusEl.className = "status";
   if (s.hostStatus === "ok") {
-    statusEl.textContent = `Verbunden mit OpenDownload Manager ${s.appVersion ?? ""}`;
+    statusEl.textContent = msg("statusConnected", s.appVersion ?? "").trim();
     statusEl.classList.add("ok");
   } else if (s.hostStatus === "app_not_running") {
-    statusEl.textContent = "Die App läuft nicht. Sie wird beim nächsten erkannten Download automatisch gestartet.";
+    statusEl.textContent = msg("statusAppNotRunning");
   } else if (s.hostStatus === "host_missing") {
-    statusEl.textContent = "OpenDownload Manager ist nicht installiert oder die Browser-Integration ist nicht registriert.";
+    statusEl.textContent = msg("statusHostMissing");
     statusEl.classList.add("err");
   }
-  lastEl.textContent = s.lastResult ? `Letzte Übergabe: ${s.lastResult}` : "";
+  // Decisions are stored as codes ("accepted", …), errors as text.
+  const last = DECISIONS.includes(s.lastResult) ? msg(`decision_${s.lastResult}`) : s.lastResult;
+  lastEl.textContent = last ? msg("lastResult", last) : "";
 }
 
 enabledEl.addEventListener("change", () => void patch({ paused: !enabledEl.checked }));

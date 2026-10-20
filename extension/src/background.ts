@@ -200,7 +200,7 @@ if (downloadsApi.onDeterminingFilename) {
 
 function createMenus() {
   ext.contextMenus.removeAll(() => {
-    ext.contextMenus.create({ id: MENU_ID, title: "Mit OpenDownload Manager herunterladen", contexts: ["link", "video", "audio"] });
+    ext.contextMenus.create({ id: MENU_ID, title: ext.i18n.getMessage("contextMenuTitle"), contexts: ["link", "video", "audio"] });
   });
 }
 
@@ -214,7 +214,7 @@ ext.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== MENU_ID) return;
   const url = info.linkUrl || info.srcUrl;
   if (!url || !/^https?:/i.test(url)) {
-    await patchState({ lastResult: "Dieser Link kann nicht übernommen werden (kein http/https)." });
+    await patchState({ lastResult: ext.i18n.getMessage("linkNotSupported") });
     await setBadge("error");
     return;
   }

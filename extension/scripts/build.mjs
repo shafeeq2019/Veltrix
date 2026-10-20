@@ -15,9 +15,11 @@ const CHROME_KEY =
 
 const base = {
   manifest_version: 3,
-  name: "OpenDownload Manager",
+  // Texts come from static/_locales/<lang>/messages.json (browser language).
+  name: "__MSG_extName__",
   version: pkg.version,
-  description: "Übergibt Downloads an OpenDownload Manager – mit Rückfrage, Ausnahmen und ohne Tracking.",
+  description: "__MSG_extDescription__",
+  default_locale: "en",
   icons: { 32: "icons/icon-32.png", 64: "icons/icon-64.png", 128: "icons/icon-128.png" },
   action: { default_popup: "popup.html", default_icon: { 32: "icons/icon-32.png", 64: "icons/icon-64.png" } },
   permissions: ["downloads", "nativeMessaging", "contextMenus", "storage"],
