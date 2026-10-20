@@ -10,7 +10,8 @@ import { StatsBar } from "./components/StatsBar";
 import { Toolbar } from "./components/Toolbar";
 import { Button, Dialog } from "./components/ui";
 import { actions } from "./lib/actions";
-import { api, errorMessage, isTauri, onCaptureOffer, onEngineEvent, onOfferExpired, onResync } from "./lib/api";
+import { errorText, translateNodes, useI18n, useT } from "./i18n";
+import { api, isTauri, onCaptureOffer, onEngineEvent, onOfferExpired, onResync } from "./lib/api";
 import { visibleDownloads } from "./lib/filter";
 import { extractUrls } from "./lib/format";
 import { useStore } from "./lib/store";
@@ -30,16 +31,24 @@ function useTheme() {
   }, [theme]);
 }
 
+function useDocumentLanguage() {
+  const { lang } = useI18n();
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
+}
+
 function Toasts() {
+  const t = useT();
   const toasts = useStore((s) => s.toasts);
   const dismiss = useStore((s) => s.dismissToast);
   return (
     <div className="pointer-events-none fixed right-4 bottom-4 z-[60] flex w-96 max-w-[calc(100vw-32px)] flex-col gap-2" aria-live="polite">
-      {toasts.map((t) => (
-        <div key={t.id} className="pointer-events-auto flex items-start gap-2.5 rounded-lg border border-line bg-panel px-3.5 py-2.5 shadow-lg animate-pop-in">
-          {t.kind === "error" ? <AlertTriangle size={16} className="mt-0.5 shrink-0 text-err" /> : t.kind === "success" ? <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-ok" /> : <Info size={16} className="mt-0.5 shrink-0 text-accent" />}
-          <span className="flex-1 text-[13px] break-words">{t.text}</span>
-          <button onClick={() => dismiss(t.id)} aria-label="Meldung schließen" className="text-muted hover:text-fg">
+      {toasts.map((item) => (
+        <div key={item.id} className="pointer-events-auto flex items-start gap-2.5 rounded-lg border border-line bg-panel px-3.5 py-2.5 shadow-lg animate-pop-in">
+          {item.kind === "error" ? <AlertTriangle size={16} className="mt-0.5 shrink-0 text-err" /> : item.kind === "success" ? <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-ok" /> : <Info size={16} className="mt-0.5 shrink-0 text-accent" />}
+          <span className="flex-1 text-[13px] break-words">{item.text}</span>
+          <button onClick={() => dismiss(item.id)} aria-label={t("app.toast.close")} className="text-muted hover:text-fg">
             <X size={14} />
           </button>
         </div>
@@ -63,7 +72,9 @@ export default function App() {
   const [confirmExec, setConfirmExec] = useState<DownloadView | null>(null);
   const [dragging, setDragging] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+  const { t, lang } = useI18n();
   useTheme();
+  useDocumentLanguage();
 
   const rows = useMemo(() => visibleDownloads(Object.values(downloads), category, search, sort), [downloads, category, search, sort]);
   const selection = useMemo(() => rows.filter((r) => selectedIds.includes(r.id)), [rows, selectedIds]);
@@ -74,9 +85,9 @@ export default function App() {
       const info = await api.appInfo();
       setQueueRunning(info.queue_running);
     } catch (e) {
-      toast("error", `Daten konnten nicht geladen werden: ${errorMessage(e)}`);
+      toast("error", t("app.loadFailed", { error: errorText(e, t) }));
     }
-  }, [setAll, setQueueRunning, toast]);
+  }, [setAll, setQueueRunning, toast, t]);
 
   useEffect(() => {
     if (!isTauri()) return;
@@ -171,7 +182,7 @@ export default function App() {
     const text = e.dataTransfer.getData("text/uri-list") || e.dataTransfer.getData("text/plain");
     const urls = extractUrls(text.replace(/^#.*$/gm, ""));
     if (urls.length) openAdd(urls.join("\n"));
-    else toast("info", "Kein Download-Link erkannt.");
+    else toast("info", t("app.noLink"));
   };
 
   return (
@@ -181,7 +192,7 @@ export default function App() {
         <Toolbar ref={searchRef} selection={selection} onNew={() => openAdd()} onSettings={() => setSettingsOpen(true)} onRemove={setRemoveIds} />
         {!isTauri() && (
           <div className="border-b border-warn/40 bg-warn/10 px-4 py-2 text-xs text-warn">
-            Die Oberfläche läuft außerhalb der Desktop-App. Starte sie mit „npm run app:dev“, um echte Downloads zu sehen.
+            {t("app.browserOnly")}
           </div>
         )}
         <StatsBar />
@@ -192,7 +203,7 @@ export default function App() {
 
       {dragging && (
         <div className="pointer-events-none fixed inset-3 z-30 flex items-center justify-center rounded-xl border-2 border-dashed border-accent bg-accent-soft/70 text-[15px] font-medium text-accent animate-fade-in">
-          Link hier ablegen, um ihn herunterzuladen
+          {t("app.dropHere")}
         </div>
       )}
 
@@ -205,11 +216,11 @@ export default function App() {
       <Dialog
         open={confirmExec !== null}
         onOpenChange={(o) => !o && setConfirmExec(null)}
-        title="Programm ausführen?"
+        title={t("app.exec.title")}
         footer={
           <>
             <Button variant="ghost" onClick={() => setConfirmExec(null)}>
-              Abbrechen
+              {t("common.cancel")}
             </Button>
             <Button
               variant="danger"
@@ -218,16 +229,15 @@ export default function App() {
                 setConfirmExec(null);
               }}
             >
-              Ausführen
+              {t("app.exec.run")}
             </Button>
           </>
         }
       >
         <p className="text-[13px]">
-          <strong>{confirmExec?.file_name}</strong> ist ein Programm oder Installationspaket. Beim Öffnen wird es <strong>ausgeführt</strong>. Führe nur Dateien aus
-          vertrauenswürdigen Quellen aus.
+          {translateNodes(lang, "app.exec.body", { name: <strong>{confirmExec?.file_name}</strong>, run: <strong>{t("app.exec.bodyRun")}</strong> })}
         </p>
-        <p className="mt-2 truncate text-xs text-muted">Quelle: {confirmExec?.domain}</p>
+        <p className="mt-2 truncate text-xs text-muted">{t("app.exec.source", { domain: confirmExec?.domain ?? "" })}</p>
       </Dialog>
       <Toasts />
     </div>
@@ -235,6 +245,7 @@ export default function App() {
 }
 
 function RemoveDialog({ ids, onClose }: { ids: string[] | null; onClose: () => void }) {
+  const t = useT();
   const [deleteFiles, setDeleteFiles] = useState(false);
   useEffect(() => setDeleteFiles(false), [ids]);
   const count = ids?.length ?? 0;
@@ -242,11 +253,11 @@ function RemoveDialog({ ids, onClose }: { ids: string[] | null; onClose: () => v
     <Dialog
       open={ids !== null}
       onOpenChange={(o) => !o && onClose()}
-      title={count === 1 ? "Download entfernen?" : `${count} Downloads entfernen?`}
+      title={t("app.remove.title", { count })}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            Abbrechen
+            {t("common.cancel")}
           </Button>
           <Button
             variant="danger"
@@ -255,15 +266,15 @@ function RemoveDialog({ ids, onClose }: { ids: string[] | null; onClose: () => v
               onClose();
             }}
           >
-            Entfernen
+            {t("common.remove")}
           </Button>
         </>
       }
     >
-      <p className="text-[13px]">Laufende Downloads werden gestoppt und unvollständige Teildateien gelöscht.</p>
+      <p className="text-[13px]">{t("app.remove.body")}</p>
       <label className={clsx("mt-3 flex items-center gap-2 text-[13px]")}>
         <input type="checkbox" checked={deleteFiles} onChange={(e) => setDeleteFiles(e.target.checked)} className="h-4 w-4 accent-[var(--odm-err)]" />
-        Abgeschlossene Dateien auch vom Datenträger löschen
+        {t("app.remove.deleteFiles")}
       </label>
     </Dialog>
   );

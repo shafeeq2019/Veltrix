@@ -1,3 +1,4 @@
+import type { MessageKey } from "../i18n";
 import type { CustomCategory, DownloadStatus, DownloadView } from "./types";
 
 export type CategoryKey =
@@ -13,20 +14,20 @@ export type CategoryKey =
   | "archives"
   | `custom:${string}`;
 
-export const STATUS_CATEGORIES: { key: CategoryKey; label: string }[] = [
-  { key: "all", label: "Alle Downloads" },
-  { key: "active", label: "In Bearbeitung" },
-  { key: "completed", label: "Abgeschlossen" },
-  { key: "queue", label: "Warteschlange" },
-  { key: "failed", label: "Fehlgeschlagen" },
+export const STATUS_CATEGORIES: { key: CategoryKey; label: MessageKey }[] = [
+  { key: "all", label: "category.all" },
+  { key: "active", label: "category.active" },
+  { key: "completed", label: "category.completed" },
+  { key: "queue", label: "category.queue" },
+  { key: "failed", label: "category.failed" },
 ];
 
-export const TYPE_CATEGORIES: { key: CategoryKey; label: string }[] = [
-  { key: "video", label: "Video" },
-  { key: "music", label: "Musik" },
-  { key: "documents", label: "Dokumente" },
-  { key: "programs", label: "Programme" },
-  { key: "archives", label: "Archive" },
+export const TYPE_CATEGORIES: { key: CategoryKey; label: MessageKey }[] = [
+  { key: "video", label: "category.video" },
+  { key: "music", label: "category.music" },
+  { key: "documents", label: "category.documents" },
+  { key: "programs", label: "category.programs" },
+  { key: "archives", label: "category.archives" },
 ];
 
 const ACTIVE: DownloadStatus[] = ["waiting", "connecting", "downloading", "paused"];

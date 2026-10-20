@@ -1,5 +1,6 @@
 import { Activity, AlertTriangle, CheckCircle2, Gauge } from "lucide-react";
 import { useMemo } from "react";
+import { useI18n } from "../i18n";
 import { formatSpeed } from "../lib/format";
 import { useStore } from "../lib/store";
 
@@ -16,6 +17,7 @@ function Stat({ icon, label, value, tone }: { icon: React.ReactNode; label: stri
 }
 
 export function StatsBar() {
+  const { t, locale } = useI18n();
   const downloads = useStore((s) => s.downloads);
   const counts = useMemo(() => {
     const all = Object.values(downloads);
@@ -29,11 +31,11 @@ export function StatsBar() {
   }, [downloads]);
 
   return (
-    <section className="grid shrink-0 grid-cols-2 gap-2 px-3 pt-3 lg:grid-cols-4" aria-label="Übersicht">
-      <Stat icon={<Gauge size={17} />} tone="bg-accent-soft text-accent" label="Gesamtgeschwindigkeit" value={formatSpeed(counts.speed)} />
-      <Stat icon={<Activity size={17} />} tone="bg-sky-500/12 text-sky-600" label="Aktive Downloads" value={String(counts.active)} />
-      <Stat icon={<CheckCircle2 size={17} />} tone="bg-ok/12 text-ok" label="Abgeschlossen" value={String(counts.completed)} />
-      <Stat icon={<AlertTriangle size={17} />} tone="bg-err/12 text-err" label="Fehlgeschlagen" value={String(counts.failed)} />
+    <section className="grid shrink-0 grid-cols-2 gap-2 px-3 pt-3 lg:grid-cols-4" aria-label={t("stats.label")}>
+      <Stat icon={<Gauge size={17} />} tone="bg-accent-soft text-accent" label={t("stats.totalSpeed")} value={formatSpeed(counts.speed, locale)} />
+      <Stat icon={<Activity size={17} />} tone="bg-sky-500/12 text-sky-600" label={t("stats.active")} value={String(counts.active)} />
+      <Stat icon={<CheckCircle2 size={17} />} tone="bg-ok/12 text-ok" label={t("stats.completed")} value={String(counts.completed)} />
+      <Stat icon={<AlertTriangle size={17} />} tone="bg-err/12 text-err" label={t("stats.failed")} value={String(counts.failed)} />
     </section>
   );
 }

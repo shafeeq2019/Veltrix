@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { AlertTriangle, ArrowDownToLine, CheckCircle2, Clock, Folder, Layers, Loader } from "lucide-react";
 import { useMemo } from "react";
+import { useT } from "../i18n";
 import { categoryCounts, STATUS_CATEGORIES, TYPE_CATEGORIES, type CategoryKey } from "../lib/filter";
 import { useStore } from "../lib/store";
 import type { CustomCategory } from "../lib/types";
@@ -18,6 +19,7 @@ const STATUS_ICONS: Record<string, typeof Layers> = {
 };
 
 export function Sidebar() {
+  const t = useT();
   const downloads = useStore((s) => s.downloads);
   const category = useStore((s) => s.category);
   const setCategory = useStore((s) => s.setCategory);
@@ -42,7 +44,7 @@ export function Sidebar() {
   );
 
   return (
-    <nav className="flex h-full w-56 shrink-0 flex-col border-r border-line bg-panel" aria-label="Kategorien">
+    <nav className="flex h-full w-56 shrink-0 flex-col border-r border-line bg-panel" aria-label={t("sidebar.label")}>
       <div className="flex h-12 items-center gap-2 px-4">
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-600 text-white">
           <ArrowDownToLine size={16} />
@@ -53,12 +55,12 @@ export function Sidebar() {
         <ul className="space-y-0.5">
           {STATUS_CATEGORIES.map((c) => {
             const Icon = STATUS_ICONS[c.key];
-            return item(c.key, c.label, <Icon size={16} className="shrink-0 text-muted" aria-hidden />);
+            return item(c.key, t(c.label), <Icon size={16} className="shrink-0 text-muted" aria-hidden />);
           })}
         </ul>
-        <div className="mt-4 mb-1 px-2.5 text-[11px] font-semibold tracking-wide text-muted uppercase">Kategorien</div>
+        <div className="mt-4 mb-1 px-2.5 text-[11px] font-semibold tracking-wide text-muted uppercase">{t("sidebar.categories")}</div>
         <ul className="space-y-0.5">
-          {TYPE_CATEGORIES.map((c) => item(c.key, c.label, <FileIcon category={c.key} size={16} />))}
+          {TYPE_CATEGORIES.map((c) => item(c.key, t(c.label), <FileIcon category={c.key} size={16} />))}
           {custom.map((c) =>
             item(`custom:${c.id}` as CategoryKey, c.name, <Folder size={16} className="shrink-0 text-muted" aria-hidden />),
           )}

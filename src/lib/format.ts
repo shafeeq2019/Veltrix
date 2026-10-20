@@ -1,9 +1,23 @@
 // Formatting helpers. Units are binary (1 KB = 1024 B), matching what
-// download managers traditionally show.
+// download managers traditionally show. Numbers follow the UI locale;
+// the duration units (s, min, h, d) are the same in every language.
 
 const UNITS = ["B", "KB", "MB", "GB", "TB"];
 
-export function formatBytes(bytes: number | null | undefined, digits = 1): string {
+const numberFormats = new Map<string, Intl.NumberFormat>();
+
+/** Fixed number of decimals in the given locale ("11,9" / "11.9"), no grouping. */
+export function formatNumber(value: number, digits: number, locale: string): string {
+  const id = `${locale}|${digits}`;
+  let f = numberFormats.get(id);
+  if (!f) {
+    f = new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits, useGrouping: false });
+    numberFormats.set(id, f);
+  }
+  return f.format(value);
+}
+
+export function formatBytes(bytes: number | null | undefined, locale: string, digits = 1): string {
   if (bytes === null || bytes === undefined || !Number.isFinite(bytes) || bytes < 0) return "–";
   if (bytes < 1024) return `${bytes} B`;
   let v = bytes;
@@ -12,12 +26,18 @@ export function formatBytes(bytes: number | null | undefined, digits = 1): strin
     v /= 1024;
     i++;
   }
-  return `${v.toFixed(v >= 100 ? 0 : digits).replace(".", ",")} ${UNITS[i]}`;
+  return `${formatNumber(v, v >= 100 ? 0 : digits, locale)} ${UNITS[i]}`;
 }
 
-export function formatSpeed(bps: number | null | undefined): string {
+export function formatSpeed(bps: number | null | undefined, locale: string): string {
   if (!bps || bps <= 0) return "–";
-  return `${formatBytes(bps)}/s`;
+  return `${formatBytes(bps, locale)}/s`;
+}
+
+/** "25,0 %" in German, "25.0%" in English. */
+export function formatPercent(value: number, locale: string): string {
+  const n = formatNumber(value, 1, locale);
+  return locale.startsWith("de") ? `${n} %` : `${n}%`;
 }
 
 export function formatDuration(secs: number | null | undefined): string {
@@ -52,9 +72,9 @@ export function fromBytesPerSecond(bps: number): { value: number; unit: SpeedUni
   return { value: Math.round(bps / 1024), unit: "KB/s" };
 }
 
-export function formatDate(ms: number | null | undefined): string {
+export function formatDate(ms: number | null | undefined, locale: string): string {
   if (!ms) return "–";
-  return new Date(ms).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" });
+  return new Date(ms).toLocaleString(locale, { dateStyle: "short", timeStyle: "short" });
 }
 
 export function extensionOf(name: string): string {

@@ -2,9 +2,10 @@ import * as ContextMenu from "@radix-ui/react-context-menu";
 import clsx from "clsx";
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Inbox } from "lucide-react";
 import type { ReactNode } from "react";
+import { useI18n, type MessageKey } from "../i18n";
 import { actions, canCancel, canPause, canResume } from "../lib/actions";
 import type { Sort, SortKey } from "../lib/filter";
-import { formatBytes, formatDuration, formatSpeed, percent } from "../lib/format";
+import { formatBytes, formatDuration, formatPercent, formatSpeed, percent } from "../lib/format";
 import { statusText, statusTone } from "../lib/status";
 import { useStore } from "../lib/store";
 import type { DownloadView } from "../lib/types";
@@ -18,15 +19,16 @@ interface Props {
   onNew: () => void;
 }
 
-const COLUMNS: { key: SortKey; label: string; className: string }[] = [
-  { key: "name", label: "Name", className: "flex-1 min-w-0" },
-  { key: "size", label: "Größe", className: "w-36 hidden md:block" },
-  { key: "progress", label: "Fortschritt", className: "w-40" },
-  { key: "speed", label: "Geschwindigkeit", className: "w-28 hidden lg:block" },
-  { key: "status", label: "Restzeit / Status", className: "w-44" },
+const COLUMNS: { key: SortKey; label: MessageKey; className: string }[] = [
+  { key: "name", label: "table.name", className: "flex-1 min-w-0" },
+  { key: "size", label: "common.size", className: "w-36 hidden md:block" },
+  { key: "progress", label: "table.progress", className: "w-40" },
+  { key: "speed", label: "table.speed", className: "w-28 hidden lg:block" },
+  { key: "status", label: "table.status", className: "w-44" },
 ];
 
 function HeaderCell({ col, sort, setSort }: { col: (typeof COLUMNS)[number]; sort: Sort; setSort: (s: Sort) => void }) {
+  const { t } = useI18n();
   const active = sort.key === col.key;
   return (
     <button
@@ -34,7 +36,7 @@ function HeaderCell({ col, sort, setSort }: { col: (typeof COLUMNS)[number]; sor
       onClick={() => setSort({ key: col.key, dir: active && sort.dir === "desc" ? "asc" : "desc" })}
       aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : "none"}
     >
-      {col.label}
+      {t(col.label)}
       {active && (sort.dir === "asc" ? <ChevronUp size={12} /> : <ChevronDown size={12} />)}
     </button>
   );
@@ -46,6 +48,7 @@ function Row({ d, selected, onSelect, onOpen }: {
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
 }) {
+  const { t, locale } = useI18n();
   const pct = d.status === "completed" ? 100 : percent(d.downloaded, d.total_size);
   const active = d.status === "downloading" || d.status === "connecting";
   return (
@@ -72,27 +75,31 @@ function Row({ d, selected, onSelect, onOpen }: {
           </div>
           <div className="flex items-center gap-1.5 truncate text-xs text-muted">
             <span className="truncate">{d.domain ?? ""}</span>
-            {d.in_queue && <span className="rounded bg-panel-2 px-1.5 text-[10px] font-medium">Warteschlange</span>}
+            {d.in_queue && <span className="rounded bg-panel-2 px-1.5 text-[10px] font-medium">{t("common.queue")}</span>}
             {d.priority !== "normal" && (
-              <span className="rounded bg-panel-2 px-1.5 text-[10px] font-medium">{d.priority === "high" ? "Hoch" : "Niedrig"}</span>
+              <span className="rounded bg-panel-2 px-1.5 text-[10px] font-medium">{d.priority === "high" ? t("common.priority.high") : t("common.priority.low")}</span>
             )}
           </div>
         </div>
       </div>
       <div className="tabular hidden w-36 truncate text-xs text-muted md:block">
-        {d.status === "completed" ? formatBytes(d.total_size) : `${formatBytes(d.downloaded)} / ${formatBytes(d.total_size)}`}
+        {d.status === "completed" ? formatBytes(d.total_size, locale) : `${formatBytes(d.downloaded, locale)} / ${formatBytes(d.total_size, locale)}`}
       </div>
       <div className="w-40">
         <ProgressBar value={pct} active={active} error={d.status === "failed"} />
-        <div className="tabular mt-1 text-[11px] text-muted">{pct === null ? (active ? "Größe unbekannt" : "–") : `${pct.toFixed(1).replace(".", ",")} %`}</div>
+        <div className="tabular mt-1 text-[11px] text-muted">{pct === null ? (active ? t("table.sizeUnknown") : "–") : formatPercent(pct, locale)}</div>
       </div>
-      <div className="tabular hidden w-28 text-xs lg:block">{active ? formatSpeed(d.speed) : <span className="text-muted">–</span>}</div>
+      <div className="tabular hidden w-28 text-xs lg:block">{active ? formatSpeed(d.speed, locale) : <span className="text-muted">–</span>}</div>
       <div className="w-44 min-w-0">
         <div className={clsx("truncate text-xs font-medium", statusTone(d.status))} title={d.error?.message}>
-          {statusText(d)}
+          {statusText(d, t)}
         </div>
         <div className="tabular truncate text-[11px] text-muted">
-          {active && d.eta_secs !== null ? `noch ${formatDuration(d.eta_secs)}` : d.status === "completed" && d.avg_speed > 0 ? `Ø ${formatSpeed(d.avg_speed)}` : ""}
+          {active && d.eta_secs !== null
+            ? t("table.remaining", { time: formatDuration(d.eta_secs) })
+            : d.status === "completed" && d.avg_speed > 0
+              ? t("table.average", { speed: formatSpeed(d.avg_speed, locale) })
+              : ""}
         </div>
       </div>
     </div>
@@ -118,6 +125,7 @@ function MenuItem({ children, onSelect, disabled, danger }: { children: ReactNod
 const menuClass = "z-50 min-w-52 rounded-lg border border-line bg-panel p-1 shadow-xl animate-pop-in";
 
 export function DownloadTable({ rows, onOpen, onRemove, onNew }: Props) {
+  const { t } = useI18n();
   const selectedIds = useStore((s) => s.selected);
   const select = useStore((s) => s.select);
   const sort = useStore((s) => s.sort);
@@ -141,11 +149,11 @@ export function DownloadTable({ rows, onOpen, onRemove, onNew }: Props) {
               <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center text-muted">
                 <Inbox size={36} strokeWidth={1.5} />
                 <div>
-                  <div className="font-medium text-fg">Keine Downloads</div>
-                  <div className="text-xs">Füge eine URL hinzu, ziehe einen Link hierher oder starte einen Download im Browser.</div>
+                  <div className="font-medium text-fg">{t("table.empty.title")}</div>
+                  <div className="text-xs">{t("table.empty.body")}</div>
                 </div>
                 <button onClick={onNew} className="text-xs font-medium text-accent hover:underline">
-                  Neuen Download hinzufügen
+                  {t("table.empty.action")}
                 </button>
               </div>
             ) : (
@@ -164,59 +172,59 @@ export function DownloadTable({ rows, onOpen, onRemove, onNew }: Props) {
         <ContextMenu.Portal>
           <ContextMenu.Content className={menuClass}>
             <MenuItem disabled={!single || single.status !== "completed"} onSelect={() => single && onOpen(single)}>
-              Datei öffnen
+              {t("table.menu.open")}
             </MenuItem>
             <MenuItem disabled={!single} onSelect={() => single && actions.showInFolder(single.id)}>
-              Im Dateimanager anzeigen
+              {t("table.menu.showInFolder")}
             </MenuItem>
             <ContextMenu.Separator className="my-1 h-px bg-line" />
             <MenuItem disabled={!selected.some(canResume)} onSelect={() => actions.resume(selected.filter(canResume).map((d) => d.id))}>
-              Fortsetzen
+              {t("common.resume")}
             </MenuItem>
             <MenuItem disabled={!selected.some(canPause)} onSelect={() => actions.pause(selected.filter(canPause).map((d) => d.id))}>
-              Pausieren
+              {t("common.pause")}
             </MenuItem>
             <MenuItem disabled={!selected.some(canCancel)} onSelect={() => actions.cancel(selected.filter(canCancel).map((d) => d.id))}>
-              Abbrechen
+              {t("common.cancel")}
             </MenuItem>
             <MenuItem
               disabled={!selected.some((d) => d.status !== "downloading" && d.status !== "connecting")}
               onSelect={() => actions.retry(selected.filter((d) => d.status !== "downloading" && d.status !== "connecting").map((d) => d.id))}
             >
-              Erneut versuchen / neu laden
+              {t("table.menu.retry")}
             </MenuItem>
             <ContextMenu.Separator className="my-1 h-px bg-line" />
             <MenuItem disabled={!selected.some((d) => !d.in_queue && d.status !== "completed")} onSelect={() => actions.addToQueue(ids)}>
-              Zur Warteschlange hinzufügen
+              {t("common.addToQueue")}
             </MenuItem>
             <MenuItem disabled={!selected.some((d) => d.in_queue)} onSelect={() => actions.removeFromQueue(ids)}>
-              Aus Warteschlange entfernen
+              {t("table.menu.removeFromQueue")}
             </MenuItem>
             <MenuItem disabled={!single?.in_queue} onSelect={() => single && actions.moveInQueue(single.id, -1)}>
-              <ArrowUp size={14} className="mr-2" /> In Warteschlange nach oben
+              <ArrowUp size={14} className="mr-2" /> {t("table.menu.moveUp")}
             </MenuItem>
             <MenuItem disabled={!single?.in_queue} onSelect={() => single && actions.moveInQueue(single.id, 1)}>
-              <ArrowDown size={14} className="mr-2" /> In Warteschlange nach unten
+              <ArrowDown size={14} className="mr-2" /> {t("table.menu.moveDown")}
             </MenuItem>
             <ContextMenu.Sub>
               <ContextMenu.SubTrigger className="flex h-7 cursor-default items-center rounded px-2.5 text-[13px] outline-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-fg data-[state=open]:bg-panel-2">
-                Priorität
+                {t("table.menu.priority")}
               </ContextMenu.SubTrigger>
               <ContextMenu.Portal>
                 <ContextMenu.SubContent className={menuClass}>
-                  <MenuItem onSelect={() => actions.setPriority(ids, "high")}>Hoch</MenuItem>
-                  <MenuItem onSelect={() => actions.setPriority(ids, "normal")}>Normal</MenuItem>
-                  <MenuItem onSelect={() => actions.setPriority(ids, "low")}>Niedrig</MenuItem>
+                  <MenuItem onSelect={() => actions.setPriority(ids, "high")}>{t("common.priority.high")}</MenuItem>
+                  <MenuItem onSelect={() => actions.setPriority(ids, "normal")}>{t("common.priority.normal")}</MenuItem>
+                  <MenuItem onSelect={() => actions.setPriority(ids, "low")}>{t("common.priority.low")}</MenuItem>
                 </ContextMenu.SubContent>
               </ContextMenu.Portal>
             </ContextMenu.Sub>
             <ContextMenu.Separator className="my-1 h-px bg-line" />
             <MenuItem disabled={!single} onSelect={() => single && actions.copyUrl(single)}>
-              Download-URL kopieren
+              {t("table.menu.copyUrl")}
             </MenuItem>
             <ContextMenu.Separator className="my-1 h-px bg-line" />
             <MenuItem danger disabled={ids.length === 0} onSelect={() => onRemove(ids)}>
-              Entfernen…
+              {t("table.menu.remove")}
             </MenuItem>
           </ContextMenu.Content>
         </ContextMenu.Portal>

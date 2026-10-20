@@ -1,30 +1,36 @@
 // User actions with consistent error reporting.
 
-import { api, errorCode, errorMessage } from "./api";
+import { errorText, i18n, type MessageKey } from "../i18n";
+import { api, errorCode } from "./api";
 import { useStore } from "./store";
 import type { DownloadView } from "./types";
 
-async function run(label: string, fn: () => Promise<unknown>): Promise<boolean> {
+function fail(label: MessageKey, e: unknown) {
+  const { t } = i18n();
+  useStore.getState().toast("error", `${t(label)}: ${errorText(e, t)}`);
+}
+
+async function run(label: MessageKey, fn: () => Promise<unknown>): Promise<boolean> {
   try {
     await fn();
     return true;
   } catch (e) {
-    useStore.getState().toast("error", `${label}: ${errorMessage(e)}`);
+    fail(label, e);
     return false;
   }
 }
 
 export const actions = {
-  pause: (ids: string[]) => run("Pausieren fehlgeschlagen", () => api.pause(ids)),
-  resume: (ids: string[]) => run("Fortsetzen fehlgeschlagen", () => api.resume(ids)),
-  cancel: (ids: string[]) => run("Abbrechen fehlgeschlagen", () => api.cancel(ids)),
-  retry: (ids: string[]) => run("Erneuter Versuch fehlgeschlagen", () => api.retry(ids)),
-  remove: (ids: string[], deleteFiles: boolean) => run("Entfernen fehlgeschlagen", () => api.remove(ids, deleteFiles)),
-  showInFolder: (id: string) => run("Ordner konnte nicht geöffnet werden", () => api.showInFolder(id)),
-  addToQueue: (ids: string[]) => run("Warteschlange", () => api.setInQueue(ids, true)),
-  removeFromQueue: (ids: string[]) => run("Warteschlange", () => api.setInQueue(ids, false)),
-  moveInQueue: (id: string, delta: number) => run("Verschieben fehlgeschlagen", () => api.moveInQueue(id, delta)),
-  setPriority: (ids: string[], p: "low" | "normal" | "high") => run("Priorität", () => api.setPriority(ids, p)),
+  pause: (ids: string[]) => run("action.pauseFailed", () => api.pause(ids)),
+  resume: (ids: string[]) => run("action.resumeFailed", () => api.resume(ids)),
+  cancel: (ids: string[]) => run("action.cancelFailed", () => api.cancel(ids)),
+  retry: (ids: string[]) => run("action.retryFailed", () => api.retry(ids)),
+  remove: (ids: string[], deleteFiles: boolean) => run("action.removeFailed", () => api.remove(ids, deleteFiles)),
+  showInFolder: (id: string) => run("action.showInFolderFailed", () => api.showInFolder(id)),
+  addToQueue: (ids: string[]) => run("action.queue", () => api.setInQueue(ids, true)),
+  removeFromQueue: (ids: string[]) => run("action.queue", () => api.setInQueue(ids, false)),
+  moveInQueue: (id: string, delta: number) => run("action.moveFailed", () => api.moveInQueue(id, delta)),
+  setPriority: (ids: string[], p: "low" | "normal" | "high") => run("action.priority", () => api.setPriority(ids, p)),
 
   /** Opens a completed file. Returns "confirm" when the file is a program
    * and the user still has to confirm that it will be executed. */
@@ -34,7 +40,7 @@ export const actions = {
       return "ok";
     } catch (e) {
       if (errorCode(e) === "confirmation_required") return "confirm";
-      useStore.getState().toast("error", `Datei konnte nicht geöffnet werden: ${errorMessage(e)}`);
+      fail("action.openFailed", e);
       return "error";
     }
   },
@@ -43,9 +49,9 @@ export const actions = {
     try {
       const { writeText } = await import("@tauri-apps/plugin-clipboard-manager");
       await writeText(d.url);
-      useStore.getState().toast("success", "Download-URL kopiert");
+      useStore.getState().toast("success", i18n().t("action.urlCopied"));
     } catch (e) {
-      useStore.getState().toast("error", `Kopieren fehlgeschlagen: ${errorMessage(e)}`);
+      fail("action.copyFailed", e);
     }
   },
 

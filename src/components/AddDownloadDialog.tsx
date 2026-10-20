@@ -1,7 +1,8 @@
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { ChevronDown, ChevronRight, FolderOpen, Globe, KeyRound, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { api, errorCode, errorMessage } from "../lib/api";
+import { errorText, useI18n } from "../i18n";
+import { api, errorCode } from "../lib/api";
 import { extractUrls, formatBytes, formatDuration } from "../lib/format";
 import { useStore } from "../lib/store";
 import type { ProbeInfo, StartMode } from "../lib/types";
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
+  const { t, locale } = useI18n();
   const settings = useStore((s) => s.settings);
   const toast = useStore((s) => s.toast);
   const [url, setUrl] = useState(initialUrl);
@@ -66,7 +68,7 @@ export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
       setFileName(info.file_name);
     } catch (e) {
       setProbe(null);
-      setProbeError(errorMessage(e));
+      setProbeError(errorText(e, t));
       // Still allow adding: name derived from the URL.
       try {
         const last = decodeURIComponent(new URL(urls[0]).pathname.split("/").filter(Boolean).pop() ?? "");
@@ -80,7 +82,7 @@ export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
   };
 
   const chooseDir = async () => {
-    const dir = await openDialog({ directory: true, defaultPath: saveDir || undefined, title: "Zielordner wählen" });
+    const dir = await openDialog({ directory: true, defaultPath: saveDir || undefined, title: t("common.chooseSaveDir") });
     if (typeof dir === "string") setSaveDir(dir);
   };
 
@@ -94,10 +96,10 @@ export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
             await api.add({ url: u, start, save_dir: saveDir || null });
             ok++;
           } catch (e) {
-            toast("error", `${u}: ${errorMessage(e)}`);
+            toast("error", `${u}: ${errorText(e, t)}`);
           }
         }
-        toast("success", `${ok} von ${urls.length} Downloads hinzugefügt`);
+        toast("success", t("add.addedCount", { ok, count: urls.length }));
       } else {
         await api.add({
           url: urls[0],
@@ -113,8 +115,7 @@ export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
       }
       onClose();
     } catch (e) {
-      if (errorCode(e) === "duplicate") toast("info", "Diese URL ist bereits in der Liste.");
-      else toast("error", errorMessage(e));
+      toast(errorCode(e) === "duplicate" ? "info" : "error", errorText(e, t));
     } finally {
       setBusy(false);
     }
@@ -127,25 +128,25 @@ export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
     <Dialog
       open={open}
       onOpenChange={(o) => !o && onClose()}
-      title="Neuer Download"
-      description="URL eingeben, einfügen oder einen Link in das Fenster ziehen."
+      title={t("add.title")}
+      description={t("add.description")}
       width="max-w-xl"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
-            Abbrechen
+            {t("common.cancel")}
           </Button>
           {!ready ? (
             <Button variant="primary" disabled={urls.length !== 1 || probing} onClick={runProbe}>
-              {probing && <Loader2 size={14} className="animate-spin" />} Weiter
+              {probing && <Loader2 size={14} className="animate-spin" />} {t("add.next")}
             </Button>
           ) : (
             <>
               <Button disabled={busy} onClick={() => submit("queue")}>
-                Zur Warteschlange
+                {t("add.toQueue")}
               </Button>
               <Button variant="primary" disabled={busy} onClick={() => submit("now")}>
-                Jetzt herunterladen
+                {t("common.downloadNow")}
               </Button>
             </>
           )}
@@ -153,7 +154,7 @@ export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
       }
     >
       <div className="space-y-4">
-        <Field label="Download-URL(s)" hint={multiple ? `${urls.length} Links erkannt – sie werden einzeln hinzugefügt.` : undefined}>
+        <Field label={t("add.urls")} hint={multiple ? t("add.multipleHint", { count: urls.length }) : undefined}>
           <textarea
             ref={urlRef as unknown as React.Ref<HTMLTextAreaElement>}
             value={url}
@@ -169,7 +170,7 @@ export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
                 runProbe();
               }
             }}
-            placeholder="https://example.com/datei.zip"
+            placeholder={t("add.urlPlaceholder")}
             spellCheck={false}
             className="w-full resize-none rounded-md border border-line bg-panel px-2.5 py-2 font-mono text-xs text-fg focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
           />
@@ -177,14 +178,14 @@ export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
 
         <button className="flex items-center gap-1 text-xs font-medium text-muted hover:text-fg" onClick={() => setShowAuth(!showAuth)}>
           {showAuth ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          <KeyRound size={13} /> HTTP-Anmeldung
+          <KeyRound size={13} /> {t("add.auth")}
         </button>
         {showAuth && (
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Benutzername">
+            <Field label={t("add.username")}>
               <Input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="off" />
             </Field>
-            <Field label="Passwort" hint="Wird nur im Arbeitsspeicher gehalten.">
+            <Field label={t("add.password")} hint={t("add.passwordHint")}>
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="off" />
             </Field>
           </div>
@@ -192,7 +193,7 @@ export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
 
         {probeError && (
           <div className="rounded-md border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">
-            Dateiinformationen konnten nicht abgerufen werden: {probeError}. Der Download kann trotzdem hinzugefügt werden.
+            {t("add.probeFailed", { error: probeError })}
           </div>
         )}
 
@@ -201,41 +202,41 @@ export function AddDownloadDialog({ open, initialUrl, onClose }: Props) {
             <div className="flex items-center gap-3">
               <FileIcon category={probe?.category ?? "other"} size={28} />
               <div className="min-w-0 flex-1">
-                <Input value={fileName} onChange={(e) => setFileName(e.target.value)} aria-label="Dateiname" />
+                <Input value={fileName} onChange={(e) => setFileName(e.target.value)} aria-label={t("common.fileName")} />
               </div>
             </div>
             <dl className="grid grid-cols-[110px_1fr] gap-x-3 gap-y-1.5 text-xs">
-              <dt className="text-muted">Größe</dt>
-              <dd className="tabular">{probe?.total_size != null ? formatBytes(probe.total_size) : "unbekannt"}</dd>
-              <dt className="text-muted">Domain</dt>
+              <dt className="text-muted">{t("common.size")}</dt>
+              <dd className="tabular">{probe?.total_size != null ? formatBytes(probe.total_size, locale) : t("common.unknown")}</dd>
+              <dt className="text-muted">{t("common.domain")}</dt>
               <dd className="flex items-center gap-1 truncate">
                 <Globe size={12} className="text-muted" /> {probe?.domain ?? new URL(urls[0]).host}
               </dd>
-              <dt className="text-muted">URL</dt>
+              <dt className="text-muted">{t("common.url")}</dt>
               <dd className="truncate font-mono" title={probe?.final_url ?? urls[0]}>
                 {probe?.final_url ?? urls[0]}
               </dd>
-              <dt className="text-muted">Fortsetzbar</dt>
-              <dd>{probe ? (probe.resumable ? "Ja – segmentiert & fortsetzbar" : "Nein – eine Verbindung, kein Fortsetzen") : "unbekannt"}</dd>
-              <dt className="text-muted">Geschätzte Zeit</dt>
-              <dd className="tabular">{eta ?? "noch nicht berechenbar"}</dd>
+              <dt className="text-muted">{t("add.resumable")}</dt>
+              <dd>{probe ? (probe.resumable ? t("add.resumableYes") : t("add.resumableNo")) : t("common.unknown")}</dd>
+              <dt className="text-muted">{t("common.estimatedTime")}</dt>
+              <dd className="tabular">{eta ?? t("common.notYetComputable")}</dd>
             </dl>
           </div>
         )}
 
         {ready && (
-          <Field label="Zielordner">
+          <Field label={t("common.saveDir")}>
             <div className="flex gap-2">
               <Input value={saveDir} onChange={(e) => setSaveDir(e.target.value)} />
-              <Button onClick={chooseDir} title="Ordner wählen">
-                <FolderOpen size={14} /> Ändern
+              <Button onClick={chooseDir} title={t("add.chooseFolder")}>
+                <FolderOpen size={14} /> {t("common.change")}
               </Button>
             </div>
           </Field>
         )}
         {ready && !multiple && (
-          <Field label="SHA-256-Prüfsumme (optional)" hint="Wenn angegeben, wird die Datei nach dem Download verifiziert.">
-            <Input value={sha256} onChange={(e) => setSha256(e.target.value)} placeholder="64 Hex-Zeichen" className="font-mono text-xs" />
+          <Field label={t("add.sha256")} hint={t("add.sha256Hint")}>
+            <Input value={sha256} onChange={(e) => setSha256(e.target.value)} placeholder={t("add.sha256Placeholder")} className="font-mono text-xs" />
           </Field>
         )}
       </div>

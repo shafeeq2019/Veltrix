@@ -1,18 +1,28 @@
-import { extractUrls, formatBytes, formatDuration, formatSpeed, fromBytesPerSecond, percent, toBytesPerSecond } from "./format";
+import { extractUrls, formatBytes, formatDuration, formatPercent, formatSpeed, fromBytesPerSecond, percent, toBytesPerSecond } from "./format";
 
 describe("format", () => {
   it("formats bytes with binary units", () => {
-    expect(formatBytes(0)).toBe("0 B");
-    expect(formatBytes(1023)).toBe("1023 B");
-    expect(formatBytes(1536)).toBe("1,5 KB");
-    expect(formatBytes(5 * 1024 * 1024)).toBe("5,0 MB");
-    expect(formatBytes(150 * 1024 * 1024)).toBe("150 MB");
-    expect(formatBytes(null)).toBe("–");
+    expect(formatBytes(0, "de-DE")).toBe("0 B");
+    expect(formatBytes(1023, "de-DE")).toBe("1023 B");
+    expect(formatBytes(1536, "de-DE")).toBe("1,5 KB");
+    expect(formatBytes(5 * 1024 * 1024, "de-DE")).toBe("5,0 MB");
+    expect(formatBytes(150 * 1024 * 1024, "de-DE")).toBe("150 MB");
+    expect(formatBytes(null, "de-DE")).toBe("–");
+  });
+
+  it("formats numbers in the UI locale", () => {
+    const mbps = 11.9 * 1024 * 1024;
+    expect(formatSpeed(mbps, "de-DE")).toBe("11,9 MB/s");
+    expect(formatSpeed(mbps, "en-US")).toBe("11.9 MB/s");
+    expect(formatBytes(1536, "en-US")).toBe("1.5 KB");
+    expect(formatBytes(1000 * 1024 * 1024, "de-DE")).toBe("1000 MB");
+    expect(formatPercent(25, "de-DE")).toBe("25,0 %");
+    expect(formatPercent(25, "en-US")).toBe("25.0%");
   });
 
   it("formats speed and durations", () => {
-    expect(formatSpeed(0)).toBe("–");
-    expect(formatSpeed(2048)).toBe("2,0 KB/s");
+    expect(formatSpeed(0, "de-DE")).toBe("–");
+    expect(formatSpeed(2048, "de-DE")).toBe("2,0 KB/s");
     expect(formatDuration(42)).toBe("42 s");
     expect(formatDuration(125)).toBe("2 min 5 s");
     expect(formatDuration(3 * 3600 + 120)).toBe("3 h 2 min");

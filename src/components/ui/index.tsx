@@ -4,6 +4,7 @@ import * as RadixDialog from "@radix-ui/react-dialog";
 import clsx from "clsx";
 import { X } from "lucide-react";
 import { forwardRef, type ButtonHTMLAttributes, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes } from "react";
+import { useT } from "../../i18n";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
@@ -156,6 +157,7 @@ export function Dialog({
   footer?: ReactNode;
   width?: string;
 }) {
+  const t = useT();
   return (
     <RadixDialog.Root open={open} onOpenChange={onOpenChange}>
       <RadixDialog.Portal>
@@ -177,7 +179,7 @@ export function Dialog({
               )}
             </div>
             <RadixDialog.Close asChild>
-              <IconButton label="Schließen" className="-mr-2">
+              <IconButton label={t("common.close")} className="-mr-2">
                 <X size={16} />
               </IconButton>
             </RadixDialog.Close>
