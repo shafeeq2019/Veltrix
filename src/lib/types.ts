@@ -143,6 +143,7 @@ export interface ProbeInfo {
 
 export type SpeedMode = "maximum" | "balanced" | "custom";
 export type Theme = "system" | "light" | "dark";
+export type LanguageSetting = "system" | "de" | "en";
 
 export interface QueueSchedule {
   enabled: boolean;
@@ -196,7 +197,7 @@ export interface Settings {
   remote_view_token: string;
   minimize_to_tray: boolean;
   theme: Theme;
-  language: string;
+  language: LanguageSetting;
   schedule: QueueSchedule;
   capture: CaptureSettings;
   custom_categories: CustomCategory[];

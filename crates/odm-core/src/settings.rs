@@ -128,6 +128,7 @@ pub struct Settings {
     pub remote_view_token: String,
     pub minimize_to_tray: bool,
     pub theme: Theme,
+    /// UI language: "system" (follow the OS / browser), "de" or "en".
     pub language: String,
     pub schedule: QueueSchedule,
     pub capture: CaptureSettings,
@@ -171,7 +172,7 @@ impl Default for Settings {
             remote_view_token: String::new(),
             minimize_to_tray: true,
             theme: Theme::System,
-            language: "de".into(),
+            language: "system".into(),
             schedule: QueueSchedule::default(),
             capture: CaptureSettings::default(),
             custom_categories: vec![],
@@ -230,6 +231,9 @@ impl Settings {
         // Chromium ids are exactly 32 letters a-p.
         self.chromium_extension_ids.retain(|id| id.len() == 32 && id.chars().all(|c| ('a'..='p').contains(&c)));
         self.chromium_extension_ids.dedup();
+        if !matches!(self.language.as_str(), "system" | "de" | "en") {
+            self.language = "system".into();
+        }
         if self.remote_view_port < 1024 {
             self.remote_view_port = 8765;
         }
@@ -266,6 +270,18 @@ mod tests {
         assert_eq!(s.segments_per_download, 32);
         assert_eq!(s.max_concurrent_downloads, 1);
         assert_eq!(s.capture.file_types, vec!["zip".to_string()]);
+    }
+
+    #[test]
+    fn normalize_language() {
+        let mut s = Settings::default();
+        assert_eq!(s.language, "system");
+        s.language = "en".into();
+        s.normalize();
+        assert_eq!(s.language, "en");
+        s.language = "fr".into();
+        s.normalize();
+        assert_eq!(s.language, "system");
     }
 
     #[test]
