@@ -11,7 +11,7 @@ describe("extension locales", () => {
   const en = read("en");
 
   it("has German and English", () => {
-    expect(langs.sort()).toEqual(["de", "en"]);
+    expect(langs).toEqual(expect.arrayContaining(["de", "en"]));
   });
 
   it("uses the same keys and placeholders in every language", () => {

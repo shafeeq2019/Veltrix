@@ -72,6 +72,11 @@ Tastaturkürzel (Strg+N, Strg+V, Strg+F, Strg+A, Strg+,, Leertaste, Entf, Enter,
 Drag-and-drop von Links, URL aus Zwischenablage, helles/dunkles Design, Tray/Menüleiste,
 Minimieren in den Hintergrund, Benachrichtigungen, Bestätigung vor dem Ausführen von Programmen.
 
+Sprachen: **Deutsch und Englisch**. Einstellungen → Allgemein → „Sprache / Language“ bietet
+„Wie System“ (Standard), Deutsch und English; der Wechsel gilt sofort, auch für Tray-Menü und
+Benachrichtigungen. Die Handy-Ansicht folgt der Sprache des Handys, die Browser-Erweiterung
+der Sprache des Browsers. Zahlen werden passend formatiert („11,9 MB/s“ bzw. „11.9 MB/s“).
+
 ## Bekannte Einschränkungen
 
 * **Mehr Verbindungen ≠ immer schneller.** Ohne Range-Unterstützung oder bei Servern, die
@@ -92,8 +97,9 @@ Minimieren in den Hintergrund, Benachrichtigungen, Bestätigung vor dem Ausführ
 * **Ausgewogener Modus** ist eine Heuristik (80 % der beobachteten Spitzenrate), keine echte
   Messung der Gesamtauslastung des Netzwerks durch andere Programme.
 * **Keine Protokolle außer HTTP(S)** (kein FTP, BitTorrent, HLS/DASH).
-* **Oberfläche nur auf Deutsch**; die Texte sind zentral in den Komponenten und für eine
-  spätere Übersetzung vorbereitet (`language` in den Einstellungen).
+* **Fehlermeldungen des Servers** (z. B. im Tooltip eines fehlgeschlagenen Downloads und in
+  Benachrichtigungen) sind englischer Originaltext; die Oberfläche zeigt eine übersetzte
+  Kurzbeschreibung anhand des Fehlercodes.
 * **Signierung/Notarisierung** benötigt eigene Zertifikate (siehe BUILD.md); unsignierte
   Builds lösen SmartScreen-/Gatekeeper-Warnungen aus.
 * Die Windows- und macOS-Bundles werden in CI gebaut; Tray, Benachrichtigungen und

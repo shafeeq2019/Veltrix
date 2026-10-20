@@ -123,6 +123,25 @@ nutzen.
 
 Siehe [BROWSER_INTEGRATION.md](BROWSER_INTEGRATION.md#protokoll).
 
+### Sprachen (i18n)
+
+| Teil | Texte | Sprache |
+|---|---|---|
+| React-UI | `src/i18n/de.ts` (Quelle), `src/i18n/en.ts` | Einstellung `language` (`system` \| `de` \| `en`); `system` = Sprache der WebView |
+| Tray, Benachrichtigungen | `src-tauri/src/i18n.rs` (`tr(lang, Text)`) | Einstellung; `system` = OS-Locale (`sys-locale`, Fallback `LANG`/`LC_ALL`) |
+| Handy-Ansicht | Tabelle `TEXT` in `src-tauri/src/remote_page.html` | Sprache des Handys (`navigator.language`) |
+| Browser-Erweiterung | `extension/static/_locales/<lang>/messages.json` | Sprache des Browsers (WebExtension-i18n) |
+
+Neue Sprache hinzufügen (Beispiel Französisch, `fr`):
+
+1. `src/i18n/fr.ts` als Kopie von `en.ts` anlegen und übersetzen (Typ `Messages`: fehlende
+   Schlüssel sind Compilerfehler), in `MESSAGES` und `LANGUAGES` in `src/i18n/index.ts` eintragen.
+2. `"fr"` in `Settings::normalize()` (`crates/odm-core/src/settings.rs`) und im Typ
+   `LanguageSetting` (`src/lib/types.ts`) zulassen.
+3. `Lang::Fr` in `src-tauri/src/i18n.rs` ergänzen (der `match` in `tr` erzwingt alle Texte).
+4. Optional: `fr` in `TEXT` der Handy-Ansicht und `extension/static/_locales/fr/messages.json`
+   (der Test `extension/test/i18n.test.ts` prüft gleiche Schlüssel).
+
 ## 6. Datenmodell (SQLite)
 
 Tabelle `downloads`: `id`, `url`, `final_url`, `referrer`, `file_name`, `name_locked`,

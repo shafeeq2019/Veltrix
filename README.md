@@ -35,6 +35,7 @@ Gebaut mit Tauri 2, Rust und React/TypeScript.
 **Oberfläche**
 * Dashboard, Kategorien, Suche, Sortierung, Mehrfachauswahl, Kontextmenüs, Tastaturkürzel
 * Drag-and-drop von Links, URL aus der Zwischenablage, helles/dunkles Design
+* Deutsch und Englisch (App, Handy-Ansicht und Browser-Erweiterung); Standard ist die Systemsprache
 * Tray bzw. Menüleiste, Minimieren in den Hintergrund, Benachrichtigungen
 * Programme (`.exe`, `.dmg`, …) werden nur nach ausdrücklicher Bestätigung geöffnet
 
