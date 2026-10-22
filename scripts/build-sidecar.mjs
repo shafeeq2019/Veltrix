@@ -1,5 +1,5 @@
 // Builds the native messaging host and places it where Tauri's
-// `bundle.externalBin` expects it: src-tauri/binaries/odm-native-host-<triple>[.exe]
+// `bundle.externalBin` expects it: src-tauri/binaries/veltrix-native-host-<triple>[.exe]
 //
 //   node scripts/build-sidecar.mjs                    # host triple, release
 //   node scripts/build-sidecar.mjs --debug            # debug build
@@ -21,11 +21,11 @@ const outDir = join(root, "src-tauri", "binaries");
 mkdirSync(outDir, { recursive: true });
 
 function build(triple) {
-  const cargoArgs = ["build", "-p", "odm-native-host", "--target", triple];
+  const cargoArgs = ["build", "-p", "veltrix-native-host", "--target", triple];
   if (!debug) cargoArgs.push("--release");
   execFileSync("cargo", cargoArgs, { cwd: root, stdio: "inherit" });
   const exe = triple.includes("windows") ? ".exe" : "";
-  return join(root, "target", triple, profile, `odm-native-host${exe}`);
+  return join(root, "target", triple, profile, `veltrix-native-host${exe}`);
 }
 
 if (target === "universal-apple-darwin") {
@@ -33,14 +33,14 @@ if (target === "universal-apple-darwin") {
   const parts = triples.map(build);
   // Tauri compiles each architecture separately and needs a sidecar for
   // each, plus the merged one for the bundle.
-  triples.forEach((t, i) => copyFileSync(parts[i], join(outDir, `odm-native-host-${t}`)));
-  const out = join(outDir, "odm-native-host-universal-apple-darwin");
+  triples.forEach((t, i) => copyFileSync(parts[i], join(outDir, `veltrix-native-host-${t}`)));
+  const out = join(outDir, "veltrix-native-host-universal-apple-darwin");
   execFileSync("lipo", ["-create", "-output", out, ...parts], { stdio: "inherit" });
   console.log(`sidecar → ${out}`);
 } else {
   const built = build(target);
   const exe = target.includes("windows") ? ".exe" : "";
-  const out = join(outDir, `odm-native-host-${target}${exe}`);
+  const out = join(outDir, `veltrix-native-host-${target}${exe}`);
   copyFileSync(built, out);
   console.log(`sidecar → ${out}`);
 }

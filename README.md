@@ -1,4 +1,4 @@
-# OpenDownload Manager
+# Veltrix
 
 A free, open-source download manager for **Windows 10/11** and **macOS** (Intel and Apple
 Silicon). It downloads files over multiple connections, resumes interrupted downloads, takes
@@ -28,7 +28,7 @@ Built with Tauri 2, Rust and React/TypeScript.
 * Extension for Chrome, Edge, Brave, Vivaldi and Firefox: detects downloads started in the
   browser and asks whether the app should take over – or takes over automatically
 * File types, exclusions (domains, types, URL patterns), "Always take over this file type"
-* Context menu "Download with OpenDownload Manager" for links, video and audio
+* Context menu "Download with Veltrix" for links, video and audio
 
 **Phone view** (view only, off by default)
 * Scan a QR code and follow progress on your phone in your home network
@@ -64,17 +64,21 @@ There is no official release yet. Every push builds test packages automatically:
 Settings → Privacy & Security → "Open Anyway"), or run:
 
 ```bash
-xattr -dr com.apple.quarantine "/Applications/OpenDownload Manager.app"
+xattr -dr com.apple.quarantine "/Applications/Veltrix.app"
 ```
 
 **Windows:** SmartScreen warns about unsigned programs – click "More info" → "Run anyway".
+
+**Upgrading from "OpenDownload Manager"** (the project's former name): Veltrix takes over
+your downloads and settings automatically on first launch. Afterwards, delete the old app and
+replace the browser extension with the new one from the **extension** artifact.
 
 ### Browser extension (Chrome, Edge, Brave, Vivaldi)
 
 1. Unzip the **extension** artifact and keep the `chrome` folder in a permanent location.
 2. Open `chrome://extensions` and switch on **Developer mode** (top right).
 3. Click **"Load unpacked"** and select the `chrome` folder.
-4. The extension popup should say "Connected to OpenDownload Manager". If not, click
+4. The extension popup should say "Connected to Veltrix". If not, click
    **Settings → Browser → Register** in the app and restart the browser.
 
 Firefox and registration details: [docs/BROWSER_INTEGRATION.md](docs/BROWSER_INTEGRATION.md).
@@ -126,7 +130,7 @@ GitHub Actions builds test packages on every push and a draft release for `v*` t
 ```
 crates/odm-core/          download engine, segments, queue, scheduler, SQLite, settings (Rust)
 crates/odm-ipc/           protocol + local, authenticated IPC transport
-crates/odm-native-host/   native messaging host for the browser extension
+crates/veltrix-native-host/   native messaging host for the browser extension
 src-tauri/                Tauri 2 app: commands, IPC endpoint, tray, phone view, power management
 src/                      React/TypeScript UI (Tailwind, Radix), translations in src/i18n/
 extension/                WebExtension (MV3) for Chromium and Firefox

@@ -1,8 +1,8 @@
 {
-  "name": "opendownload-manager",
+  "name": "veltrix",
   "private": true,
   "version": "0.1.0",
-  "description": "OpenDownload Manager – free, open source download manager for Windows and macOS",
+  "description": "Veltrix – free, open source download manager for Windows and macOS",
   "license": "MIT",
   "type": "module",
   "scripts": {
@@ -12,7 +12,7 @@
     "test": "vitest run",
     "tauri": "tauri",
     "sidecar": "node scripts/build-sidecar.mjs",
-    "app:dev": "cargo build -p odm-native-host && tauri dev",
+    "app:dev": "cargo build -p veltrix-native-host && tauri dev",
     "app:build": "npm run sidecar && tauri build --config src-tauri/tauri.bundle.conf.json"
   },
   "dependencies": {

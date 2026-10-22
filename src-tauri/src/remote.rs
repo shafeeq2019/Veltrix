@@ -281,7 +281,7 @@ mod tests {
 
         let (status, body) = get(addr, "/", None).await;
         assert_eq!(status, 200);
-        assert!(body.contains("OpenDownload"));
+        assert!(body.contains("Veltrix"));
         assert_eq!(get(addr, "/api/state", None).await.0, 401);
         assert_eq!(get(addr, "/api/state", Some("wrong")).await.0, 401);
         let (status, body) = get(addr, "/api/state", Some(&token)).await;

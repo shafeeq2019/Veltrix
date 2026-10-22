@@ -39,7 +39,7 @@ impl Store {
         if version > SCHEMA_VERSION {
             return Err(DownloadError::new(
                 ErrorCode::Storage,
-                "The database was created by a newer version of OpenDownload Manager",
+                "The database was created by a newer version of Veltrix",
             )
             .retryable(false));
         }

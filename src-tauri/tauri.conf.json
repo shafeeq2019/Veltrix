@@ -1,9 +1,9 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "OpenDownload Manager",
-  "mainBinaryName": "opendownload-manager",
+  "productName": "Veltrix",
+  "mainBinaryName": "veltrix",
   "version": "0.1.0",
-  "identifier": "org.opendownload.manager",
+  "identifier": "app.veltrix",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "OpenDownload Manager",
+        "title": "Veltrix",
         "width": 1180,
         "height": 760,
         "minWidth": 720,
@@ -32,7 +32,7 @@
     "targets": ["nsis", "msi", "app", "dmg"],
     "category": "Utility",
     "shortDescription": "Free, open source download manager",
-    "longDescription": "OpenDownload Manager is a free, open source download manager with segmented downloads, resume support, a persistent queue and browser integration.",
+    "longDescription": "Veltrix is a free, open source download manager with segmented downloads, resume support, a persistent queue and browser integration.",
     "license": "MIT",
     "icon": [
       "icons/32x32.png",

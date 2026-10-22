@@ -1,6 +1,6 @@
 [package]
 name = "odm-ipc"
-description = "Typed protocol and local IPC transport between browser extension, native messaging host and the OpenDownload Manager app"
+description = "Typed protocol and local IPC transport between browser extension, native messaging host and the Veltrix app"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

@@ -1,4 +1,4 @@
-//! Native messaging host for the OpenDownload Manager browser extension.
+//! Native messaging host for the Veltrix browser extension.
 //!
 //! The browser starts this process and talks to it over stdin/stdout using
 //! length-prefixed JSON (native messaging). Every message is validated and
@@ -17,7 +17,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
-const HOST_NAME: &str = "org.opendownload.manager";
+const HOST_NAME: &str = "app.veltrix";
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -26,7 +26,7 @@ fn main() {
         return;
     }
     if args.get(1).map(String::as_str) == Some("--version") {
-        println!("odm-native-host {}", env!("CARGO_PKG_VERSION"));
+        println!("veltrix-native-host {}", env!("CARGO_PKG_VERSION"));
         return;
     }
     let origin = browser_origin(&args);
@@ -42,7 +42,7 @@ fn main() {
             Ok(raw) => raw,
             Err(FrameError::Closed) => break,
             Err(e) => {
-                eprintln!("odm-native-host: cannot read message: {e}");
+                eprintln!("veltrix-native-host: cannot read message: {e}");
                 let _ =
                     framing::write_message(&mut output, &error("invalid", IpcErrorCode::BadRequest, &e.to_string()));
                 break;
@@ -85,15 +85,13 @@ fn forward(
     match client.request(origin.clone(), request.clone()) {
         Ok(resp) => return resp,
         Err(ClientError::NotRunning(_)) if may_launch && !*launched => {}
-        Err(ClientError::NotRunning(_)) => {
-            return error(&id, IpcErrorCode::AppNotRunning, "OpenDownload Manager is not running")
-        }
+        Err(ClientError::NotRunning(_)) => return error(&id, IpcErrorCode::AppNotRunning, "Veltrix is not running"),
         Err(e) => return error(&id, IpcErrorCode::Internal, &e.to_string()),
     }
     *launched = true;
     if let Err(e) = launch_app() {
-        eprintln!("odm-native-host: cannot start the app: {e}");
-        return error(&id, IpcErrorCode::AppNotRunning, "OpenDownload Manager is not running and could not be started");
+        eprintln!("veltrix-native-host: cannot start the app: {e}");
+        return error(&id, IpcErrorCode::AppNotRunning, "Veltrix is not running and could not be started");
     }
     let deadline = Instant::now() + Duration::from_secs(20);
     loop {
@@ -127,11 +125,7 @@ fn browser_origin(args: &[String]) -> Option<String> {
 fn app_executable() -> io::Result<PathBuf> {
     let exe = std::env::current_exe()?;
     let dir = exe.parent().ok_or_else(|| io::Error::other("no parent directory"))?;
-    let names: &[&str] = if cfg!(windows) {
-        &["opendownload-manager.exe", "OpenDownload Manager.exe"]
-    } else {
-        &["opendownload-manager", "OpenDownload Manager"]
-    };
+    let names: &[&str] = if cfg!(windows) { &["veltrix.exe", "Veltrix.exe"] } else { &["veltrix", "Veltrix"] };
     names
         .iter()
         .map(|n| dir.join(n))
@@ -183,7 +177,7 @@ fn launch_app() -> io::Result<()> {
     }
 }
 
-/// `odm-native-host --manifest chrome|firefox <extension-id>` prints a
+/// `veltrix-native-host --manifest chrome|firefox <extension-id>` prints a
 /// native messaging manifest for manual registration.
 fn print_manifest(args: &[String]) {
     let browser = args.get(2).map(String::as_str).unwrap_or("chrome");
@@ -191,7 +185,7 @@ fn print_manifest(args: &[String]) {
     let path = std::env::current_exe().map(|p| p.to_string_lossy().into_owned()).unwrap_or_default();
     let mut manifest = serde_json::json!({
         "name": HOST_NAME,
-        "description": "OpenDownload Manager native messaging host",
+        "description": "Veltrix native messaging host",
         "path": path,
         "type": "stdio",
     });

@@ -245,7 +245,7 @@ export const en: Messages = {
   "settings.scheduleStop": "Stop (optional)",
   "settings.weekdays": "Weekdays",
   "settings.capture": "Detect downloads in the browser",
-  "settings.captureHint": "Requires the OpenDownload extension for Chrome, Edge, Brave or Firefox.",
+  "settings.captureHint": "Requires the Veltrix extension for Chrome, Edge, Brave or Firefox.",
   "settings.autoStart": "Take over automatically",
   "settings.autoStartHint": "Start detected downloads without asking.",
   "settings.capturePrivate": "Also detect in private windows",

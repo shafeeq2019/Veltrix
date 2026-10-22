@@ -2,7 +2,7 @@
 //!
 //! * Unix (macOS/Linux): a Unix domain socket inside the per-user app data
 //!   directory (mode 0700), socket mode 0600, and the peer's UID is checked.
-//! * Windows: a named pipe `\\.\pipe\opendownload-manager-<user>-<hash>` created
+//! * Windows: a named pipe `\\.\pipe\veltrix-<user>-<hash>` created
 //!   with `first_pipe_instance` (prevents squatting) and
 //!   `reject_remote_clients`.
 //!
@@ -16,7 +16,9 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-pub const APP_IDENTIFIER: &str = "org.opendownload.manager";
+pub const APP_IDENTIFIER: &str = "app.veltrix";
+/// Identifier used before the app was renamed to Veltrix.
+pub const LEGACY_APP_IDENTIFIER: &str = "org.opendownload.manager";
 const TOKEN_FILE: &str = "ipc-token";
 
 /// Per-user application data directory, identical to Tauri's `app_data_dir`.
@@ -25,6 +27,30 @@ pub fn app_data_dir() -> PathBuf {
         return PathBuf::from(dir);
     }
     base_data_dir().join(APP_IDENTIFIER)
+}
+
+/// Data directory of releases published under the former name
+/// "OpenDownload Manager".
+pub fn legacy_data_dir() -> PathBuf {
+    base_data_dir().join(LEGACY_APP_IDENTIFIER)
+}
+
+/// Copy the database of the former app identifier into `data_dir` once, so
+/// downloads and settings survive the rename. Returns true when data was moved.
+pub fn migrate_legacy_data(data_dir: &Path, legacy_dir: &Path) -> io::Result<bool> {
+    let db = "odm.sqlite";
+    if data_dir.join(db).exists() || !legacy_dir.join(db).is_file() {
+        return Ok(false);
+    }
+    std::fs::create_dir_all(data_dir)?;
+    // WAL and shared-memory files belong to the database and must move with it.
+    for name in [db, "odm.sqlite-wal", "odm.sqlite-shm"] {
+        let from = legacy_dir.join(name);
+        if from.is_file() {
+            std::fs::copy(&from, data_dir.join(name))?;
+        }
+    }
+    Ok(true)
 }
 
 fn base_data_dir() -> PathBuf {
@@ -56,10 +82,7 @@ pub fn endpoint(data_dir: &Path) -> String {
             .collect();
         // The data directory is part of the name so that separate data
         // directories (tests, portable setups) never share a pipe.
-        format!(
-            r"\\.\pipe\opendownload-manager-{user}-{:016x}",
-            fnv1a(data_dir.to_string_lossy().to_lowercase().as_bytes())
-        )
+        format!(r"\\.\pipe\veltrix-{user}-{:016x}", fnv1a(data_dir.to_string_lossy().to_lowercase().as_bytes()))
     }
     #[cfg(not(windows))]
     {
@@ -186,5 +209,37 @@ impl Client {
             }
         }
         Err(io::Error::new(io::ErrorKind::TimedOut, "named pipe busy"))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn migrates_legacy_database_once() {
+        let root = tempfile::tempdir().unwrap();
+        let legacy = root.path().join("org.opendownload.manager");
+        let current = root.path().join("app.veltrix");
+        std::fs::create_dir_all(&legacy).unwrap();
+        std::fs::write(legacy.join("odm.sqlite"), b"db").unwrap();
+        std::fs::write(legacy.join("odm.sqlite-wal"), b"wal").unwrap();
+        std::fs::write(legacy.join("ipc-token"), b"secret").unwrap();
+
+        assert!(migrate_legacy_data(&current, &legacy).unwrap());
+        assert_eq!(std::fs::read(current.join("odm.sqlite")).unwrap(), b"db");
+        assert_eq!(std::fs::read(current.join("odm.sqlite-wal")).unwrap(), b"wal");
+        assert!(!current.join("ipc-token").exists(), "tokens are never copied");
+
+        // Existing data is never overwritten.
+        std::fs::write(current.join("odm.sqlite"), b"new").unwrap();
+        assert!(!migrate_legacy_data(&current, &legacy).unwrap());
+        assert_eq!(std::fs::read(current.join("odm.sqlite")).unwrap(), b"new");
+    }
+
+    #[test]
+    fn nothing_to_migrate() {
+        let root = tempfile::tempdir().unwrap();
+        assert!(!migrate_legacy_data(&root.path().join("new"), &root.path().join("old")).unwrap());
     }
 }

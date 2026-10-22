@@ -20,11 +20,11 @@ Es werden **keine** Umgebungsvariablen benötigt (daher keine `.env.example`). O
 
 ```bash
 npm ci
-npm run app:dev          # baut odm-native-host (debug) und startet `tauri dev`
+npm run app:dev          # baut veltrix-native-host (debug) und startet `tauri dev`
 ```
 
 `tauri dev` startet Vite (Port 1420) und die App mit Hot-Reload. Im Debug-Build liegt
-`odm-native-host` in `target/debug/` neben der App; die App registriert ihn beim Start für
+`veltrix-native-host` in `target/debug/` neben der App; die App registriert ihn beim Start für
 installierte Browser.
 
 Nur das UI im Browser ansehen: `npm run dev` (ohne Backend-Daten, Hinweisbanner wird angezeigt).
@@ -54,18 +54,18 @@ npm run app:build
 Das entspricht:
 
 ```bash
-node scripts/build-sidecar.mjs                     # odm-native-host → src-tauri/binaries/odm-native-host-<triple>
+node scripts/build-sidecar.mjs                     # veltrix-native-host → src-tauri/binaries/veltrix-native-host-<triple>
 npx tauri build --config src-tauri/tauri.bundle.conf.json
 ```
 
 `tauri.bundle.conf.json` fügt den Host als `externalBin` hinzu. Er wird neben die Haupt-
-anwendung installiert (`…\OpenDownload Manager\odm-native-host.exe` bzw.
-`…app/Contents/MacOS/odm-native-host`).
+anwendung installiert (`…\Veltrix\veltrix-native-host.exe` bzw.
+`…app/Contents/MacOS/veltrix-native-host`).
 
 Ergebnisse unter `target/release/bundle/`:
 
 * Windows: `nsis/*-setup.exe` (Installation pro Benutzer, ohne Adminrechte), `msi/*.msi`
-* macOS: `macos/OpenDownload Manager.app`, `dmg/*.dmg`
+* macOS: `macos/Veltrix.app`, `dmg/*.dmg`
 
 ### macOS Universal (Intel + Apple Silicon)
 
@@ -90,7 +90,7 @@ Gatekeeper blockiert sie daher beim ersten Start. Entweder im Finder Rechtsklick
 (bzw. Systemeinstellungen → Datenschutz & Sicherheit → „Dennoch öffnen“) oder:
 
 ```bash
-xattr -dr com.apple.quarantine "/Applications/OpenDownload Manager.app"
+xattr -dr com.apple.quarantine "/Applications/Veltrix.app"
 ```
 
 Die Meldung „… wird auf diesem Mac nicht unterstützt“ bedeutet dagegen eine falsche
@@ -108,11 +108,11 @@ Ohne Signatur funktionieren die Builds, aber Windows SmartScreen bzw. macOS Gate
    * `APPLE_CERTIFICATE_PASSWORD`
    * `APPLE_SIGNING_IDENTITY` – z. B. `Developer ID Application: Name (TEAMID)`
    * `APPLE_ID`, `APPLE_PASSWORD` (app-spezifisches Passwort), `APPLE_TEAM_ID` – für die Notarisierung
-3. `tauri-action` signiert App und Sidecar (`odm-native-host`) mit Hardened Runtime und
+3. `tauri-action` signiert App und Sidecar (`veltrix-native-host`) mit Hardened Runtime und
    notarisiert das DMG automatisch.
 
 Lokal: dieselben Variablen exportieren und `npm run app:build` ausführen.
-Prüfen: `spctl -a -vv "OpenDownload Manager.app"` und `xcrun stapler validate *.dmg`.
+Prüfen: `spctl -a -vv "Veltrix.app"` und `xcrun stapler validate *.dmg`.
 
 ### Windows
 
@@ -124,7 +124,7 @@ verwenden. Der Sidecar wird von Tauri mitsigniert.
 ## Deinstallation
 
 * **Windows:** Über „Apps & Features“. Der NSIS-Deinstaller entfernt die Native-Messaging-
-  Registry-Schlüssel. Daten bleiben in `%APPDATA%\org.opendownload.manager` (vom Deinstaller
+  Registry-Schlüssel. Daten bleiben in `%APPDATA%\app.veltrix` (vom Deinstaller
   optional löschbar).
 * **macOS:** In der App **Einstellungen → Browser → Entfernen**, dann App in den Papierkorb.
-  Daten: `~/Library/Application Support/org.opendownload.manager`.
+  Daten: `~/Library/Application Support/app.veltrix`.

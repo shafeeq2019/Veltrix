@@ -9,7 +9,9 @@ use odm_core::settings::FIREFOX_EXTENSION_ID;
 use serde::Serialize;
 use std::path::{Path, PathBuf};
 
-pub const HOST_NAME: &str = "org.opendownload.manager";
+pub const HOST_NAME: &str = "app.veltrix";
+/// Host name registered by builds released as "OpenDownload Manager".
+const LEGACY_HOST_NAME: &str = "org.opendownload.manager";
 
 #[derive(Debug, Clone, Serialize)]
 pub struct BrowserRegistration {
@@ -41,7 +43,7 @@ struct Target {
 
 pub fn host_executable() -> Option<PathBuf> {
     let exe = std::env::current_exe().ok()?;
-    let name = if cfg!(windows) { "odm-native-host.exe" } else { "odm-native-host" };
+    let name = if cfg!(windows) { "veltrix-native-host.exe" } else { "veltrix-native-host" };
     let p = exe.parent()?.join(name);
     p.is_file().then_some(p)
 }
@@ -49,7 +51,7 @@ pub fn host_executable() -> Option<PathBuf> {
 fn manifest(kind: Kind, host: &Path, chromium_ids: &[String]) -> serde_json::Value {
     let mut m = serde_json::json!({
         "name": HOST_NAME,
-        "description": "OpenDownload Manager native messaging host",
+        "description": "Veltrix native messaging host",
         "path": host.to_string_lossy(),
         "type": "stdio",
     });
@@ -122,7 +124,7 @@ fn targets() -> Vec<Target> {
 
 /// Write manifests and registry entries for all detected browsers.
 pub fn register(data_dir: &Path, chromium_ids: &[String]) -> Result<IntegrationStatus, String> {
-    let host = host_executable().ok_or("odm-native-host was not found next to the application")?;
+    let host = host_executable().ok_or("veltrix-native-host was not found next to the application")?;
     let manifests_dir = data_dir.join("native-messaging");
     std::fs::create_dir_all(&manifests_dir).map_err(|e| e.to_string())?;
     for kind in [Kind::Chromium, Kind::Firefox] {
@@ -165,6 +167,23 @@ fn register_target(t: &Target, manifests_dir: &Path) -> std::io::Result<()> {
     let (key, _) = hkcu.create_subkey(format!(r"{}\{}", t.registry_key, HOST_NAME))?;
     key.set_value("", &manifest_file(manifests_dir, t.kind).to_string_lossy().to_string())?;
     Ok(())
+}
+
+/// Remove the registration of the former app name so browsers do not try to
+/// start a host that no longer exists.
+pub fn remove_legacy_registration() {
+    for t in targets() {
+        #[cfg(not(windows))]
+        {
+            let _ = std::fs::remove_file(t.dir.join(format!("{LEGACY_HOST_NAME}.json")));
+        }
+        #[cfg(windows)]
+        {
+            use winreg::enums::HKEY_CURRENT_USER;
+            let _ = winreg::RegKey::predef(HKEY_CURRENT_USER)
+                .delete_subkey_all(format!(r"{}\{}", t.registry_key, LEGACY_HOST_NAME));
+        }
+    }
 }
 
 pub fn unregister(data_dir: &Path) -> IntegrationStatus {
@@ -220,7 +239,7 @@ mod tests {
 
     #[test]
     fn manifests_have_required_fields() {
-        let host = Path::new("/opt/odm/odm-native-host");
+        let host = Path::new("/opt/odm/veltrix-native-host");
         let c = manifest(Kind::Chromium, host, &["pjmfnhocabgijmcbdcbkfeaogjnhffea".into()]);
         assert_eq!(c["name"], HOST_NAME);
         assert_eq!(c["type"], "stdio");

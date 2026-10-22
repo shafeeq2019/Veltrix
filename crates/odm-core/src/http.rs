@@ -9,7 +9,7 @@ use reqwest::header::{self, HeaderMap, HeaderValue};
 use reqwest::{Client, Response, StatusCode};
 use std::time::Duration;
 
-pub const DEFAULT_USER_AGENT: &str = concat!("OpenDownloadManager/", env!("CARGO_PKG_VERSION"));
+pub const DEFAULT_USER_AGENT: &str = concat!("Veltrix/", env!("CARGO_PKG_VERSION"));
 
 #[derive(Debug, Clone)]
 pub struct HttpConfig {

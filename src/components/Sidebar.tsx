@@ -49,7 +49,7 @@ export function Sidebar() {
         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-600 text-white">
           <ArrowDownToLine size={16} />
         </div>
-        <span className="font-semibold tracking-tight">OpenDownload</span>
+        <span className="font-semibold tracking-tight">Veltrix</span>
       </div>
       <div className="flex-1 overflow-y-auto px-2 pb-3">
         <ul className="space-y-0.5">

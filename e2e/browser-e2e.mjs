@@ -2,7 +2,7 @@
 //   Chromium + extension → native messaging host → desktop app (IPC) → engine → file on disk
 //
 // Linux only (needs a display; run under xvfb-run). Requirements:
-//   cargo build -p opendownload-manager -p odm-native-host
+//   cargo build -p veltrix -p veltrix-native-host
 //   (cd extension && npm run build)
 //   a Chromium build that allows --load-extension (CHROMIUM env var, default /opt/pw-browsers/chromium)
 // Usage: xvfb-run -a node e2e/browser-e2e.mjs
@@ -87,11 +87,11 @@ c.commit()`,
 ]);
 
 // 3. Native messaging manifest inside the Chromium profile.
-const host = join(root, "target/debug/odm-native-host");
+const host = join(root, "target/debug/veltrix-native-host");
 writeFileSync(
-  join(profile, "NativeMessagingHosts", "org.opendownload.manager.json"),
+  join(profile, "NativeMessagingHosts", "app.veltrix.json"),
   JSON.stringify({
-    name: "org.opendownload.manager",
+    name: "app.veltrix",
     description: "e2e",
     path: host,
     type: "stdio",
@@ -102,7 +102,7 @@ writeFileSync(
 // 4. Desktop app in background mode.
 // Software rendering keeps WebKitGTK happy on headless CI machines.
 const env = { ...process.env, ODM_DATA_DIR: dataDir, ODM_LOG: "info", WEBKIT_DISABLE_COMPOSITING_MODE: "1", WEBKIT_DISABLE_DMABUF_RENDERER: "1", LIBGL_ALWAYS_SOFTWARE: "1" };
-const app = spawn(join(root, "target/debug/opendownload-manager"), ["--background"], { env, stdio: ["ignore", "inherit", "inherit"] });
+const app = spawn(join(root, "target/debug/veltrix"), ["--background"], { env, stdio: ["ignore", "inherit", "inherit"] });
 app.on("exit", (code, signal) => console.error(`app exited: code=${code} signal=${signal}`));
 const deadline = Date.now() + 60_000;
 while (!existsSync(join(dataDir, "ipc-token")) || !existsSync(join(dataDir, "ipc.sock"))) {

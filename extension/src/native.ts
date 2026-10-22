@@ -2,7 +2,7 @@
 // which also keeps a Chrome MV3 service worker alive while waiting for the
 // user to answer the dialog in the desktop app.
 
-export const HOST_NAME = "org.opendownload.manager";
+export const HOST_NAME = "app.veltrix";
 export const PROTOCOL_VERSION = 1;
 
 type Api = typeof chrome;
@@ -56,7 +56,7 @@ export function request(body: Record<string, unknown>, timeoutMs: number): Promi
       }
       fn();
     };
-    const timer = setTimeout(() => finish(() => reject(new NativeError("Timeout waiting for OpenDownload Manager", "timeout"))), timeoutMs);
+    const timer = setTimeout(() => finish(() => reject(new NativeError("Timeout waiting for Veltrix", "timeout"))), timeoutMs);
     port.onMessage.addListener((msg: HostResponse) => {
       if (!msg || msg.id !== id) return;
       if (msg.type === "error" && msg.code === "app_not_running") {

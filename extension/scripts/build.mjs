@@ -32,7 +32,7 @@ const targets = {
   firefox: {
     ...base,
     background: { scripts: ["background.js"] },
-    browser_specific_settings: { gecko: { id: "odm@opendownload-manager.local", strict_min_version: "128.0" } },
+    browser_specific_settings: { gecko: { id: "veltrix@veltrix.local", strict_min_version: "128.0" } },
   },
 };
 

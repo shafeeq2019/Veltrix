@@ -247,7 +247,7 @@ export const de = {
   "settings.scheduleStop": "Stopp (optional)",
   "settings.weekdays": "Wochentage",
   "settings.capture": "Downloads im Browser erkennen",
-  "settings.captureHint": "Erfordert die OpenDownload-Erweiterung für Chrome, Edge, Brave oder Firefox.",
+  "settings.captureHint": "Erfordert die Veltrix-Erweiterung für Chrome, Edge, Brave oder Firefox.",
   "settings.autoStart": "Automatisch übernehmen",
   "settings.autoStartHint": "Erkannte Downloads ohne Rückfrage starten.",
   "settings.capturePrivate": "Auch in privaten Fenstern erkennen",

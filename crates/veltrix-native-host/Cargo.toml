@@ -1,6 +1,6 @@
 [package]
-name = "odm-native-host"
-description = "Native messaging host that relays browser extension requests to OpenDownload Manager"
+name = "veltrix-native-host"
+description = "Native messaging host that relays browser extension requests to Veltrix"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

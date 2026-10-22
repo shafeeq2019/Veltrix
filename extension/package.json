@@ -1,8 +1,8 @@
 {
-  "name": "opendownload-manager-extension",
+  "name": "veltrix-extension",
   "private": true,
   "version": "0.1.0",
-  "description": "Hands browser downloads over to OpenDownload Manager",
+  "description": "Hands browser downloads over to Veltrix",
   "license": "MIT",
   "type": "module",
   "scripts": {

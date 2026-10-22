@@ -1,7 +1,7 @@
 # Architektur
 
 Dieses Dokument beschreibt Anforderungen (Phase 1), Module, Schnittstellen und
-die wichtigsten Entscheidungen von OpenDownload Manager.
+die wichtigsten Entscheidungen von Veltrix.
 
 ## 1. Präzisierte Anforderungen
 
@@ -18,7 +18,7 @@ die wichtigsten Entscheidungen von OpenDownload Manager.
 
 ```
 ┌──────────────────────┐   Native Messaging (stdin/stdout,     ┌─────────────────────────┐
-│  Browser-Erweiterung │   längenpräfixiertes JSON)            │  odm-native-host        │
+│  Browser-Erweiterung │   längenpräfixiertes JSON)            │  veltrix-native-host        │
 │  (MV3, TypeScript)   │ ─────────────────────────────────────▶│  (Rust, kurzlebig)      │
 │  downloads-API,      │ ◀───────────────────────────────────── │  validiert, leitet      │
 │  contextMenus        │                                        │  weiter, startet App    │
@@ -55,7 +55,7 @@ die wichtigsten Entscheidungen von OpenDownload Manager.
 | Queue Manager | `crates/odm-core/src/manager.rs` – Warteschlange, Positionen, Prioritäten, Parallelitätslimit. |
 | Download Scheduler | `manager.rs` (`schedule_tick`, `apply_schedule`) – Zeitplan, automatische Wiederholung, Start wartender Downloads. |
 | Browser Integration | `extension/` (WebExtension) und `src-tauri/src/capture.rs` (Angebote, Dialog, „immer übernehmen“). |
-| IPC Layer | `crates/odm-ipc` (Protokoll, Framing, Transport, Server) und `crates/odm-native-host`. |
+| IPC Layer | `crates/odm-ipc` (Protokoll, Framing, Transport, Server) und `crates/veltrix-native-host`. |
 | Persistent Storage | `crates/odm-core/src/storage.rs` – SQLite (WAL), Schema-Version per `user_version`. |
 | Application Settings | `crates/odm-core/src/settings.rs` – serde-Defaults, `normalize()` begrenzt alle Werte. |
 | Notification Service | `src-tauri/src/lib.rs` (`forward_events`) über `tauri-plugin-notification`. |

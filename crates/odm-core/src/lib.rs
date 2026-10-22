@@ -1,4 +1,4 @@
-//! OpenDownload Manager core: download engine, segment manager, queue,
+//! Veltrix core: download engine, segment manager, queue,
 //! scheduler and persistent storage. Independent of the UI framework.
 
 pub mod category;

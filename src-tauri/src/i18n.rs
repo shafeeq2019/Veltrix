@@ -53,16 +53,16 @@ impl Lang {
 pub fn tr(lang: Lang, text: Text) -> &'static str {
     use Text::*;
     match (lang, text) {
-        (Lang::De, TrayShow) => "OpenDownload Manager öffnen",
-        (Lang::En, TrayShow) => "Open OpenDownload Manager",
+        (Lang::De, TrayShow) => "Veltrix öffnen",
+        (Lang::En, TrayShow) => "Open Veltrix",
         (Lang::De, TrayQueueStart) => "Warteschlange starten",
         (Lang::En, TrayQueueStart) => "Start queue",
         (Lang::De, TrayQueueStop) => "Warteschlange anhalten",
         (Lang::En, TrayQueueStop) => "Stop queue",
         (Lang::De, TrayQuit) => "Beenden",
         (Lang::En, TrayQuit) => "Quit",
-        (Lang::De, TrayActive) => "OpenDownload Manager – {active} aktiv, {speed}/s",
-        (Lang::En, TrayActive) => "OpenDownload Manager – {active} active, {speed}/s",
+        (Lang::De, TrayActive) => "Veltrix – {active} aktiv, {speed}/s",
+        (Lang::En, TrayActive) => "Veltrix – {active} active, {speed}/s",
         (Lang::De, NotifyCompleted) => "Download abgeschlossen",
         (Lang::En, NotifyCompleted) => "Download complete",
         (Lang::De, NotifyFailed) => "Download fehlgeschlagen",

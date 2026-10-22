@@ -1,7 +1,7 @@
 {
-  "extName": { "message": "OpenDownload Manager" },
-  "extDescription": { "message": "Übergibt Downloads an OpenDownload Manager – mit Rückfrage, Ausnahmen und ohne Tracking." },
-  "contextMenuTitle": { "message": "Mit OpenDownload Manager herunterladen" },
+  "extName": { "message": "Veltrix" },
+  "extDescription": { "message": "Übergibt Downloads an Veltrix – mit Rückfrage, Ausnahmen und ohne Tracking." },
+  "contextMenuTitle": { "message": "Mit Veltrix herunterladen" },
   "linkNotSupported": { "message": "Dieser Link kann nicht übernommen werden (kein http/https)." },
   "popupChecking": { "message": "Prüfe Verbindung…" },
   "popupCaptureTitle": { "message": "Download-Erkennung" },
@@ -10,11 +10,11 @@
   "popupCookiesHint": { "message": "Nur für übernommene Downloads, für Seiten mit Anmeldung. Fragt nach Berechtigung." },
   "popupSettingsHint": { "message": "Dateitypen, Ausnahmen und automatische Übernahme stellst du in der Desktop-App unter Einstellungen → Browser ein." },
   "statusConnected": {
-    "message": "Verbunden mit OpenDownload Manager $VERSION$",
+    "message": "Verbunden mit Veltrix $VERSION$",
     "placeholders": { "version": { "content": "$1" } }
   },
   "statusAppNotRunning": { "message": "Die App läuft nicht. Sie wird beim nächsten erkannten Download automatisch gestartet." },
-  "statusHostMissing": { "message": "OpenDownload Manager ist nicht installiert oder die Browser-Integration ist nicht registriert." },
+  "statusHostMissing": { "message": "Veltrix ist nicht installiert oder die Browser-Integration ist nicht registriert." },
   "lastResult": {
     "message": "Letzte Übergabe: $RESULT$",
     "placeholders": { "result": { "content": "$1" } }

@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 fn run_host(data_dir: &std::path::Path, messages: &[serde_json::Value]) -> Vec<serde_json::Value> {
-    let mut child = Command::new(env!("CARGO_BIN_EXE_odm-native-host"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_veltrix-native-host"))
         .arg("chrome-extension://testextension/")
         .env("ODM_DATA_DIR", data_dir)
         .stdin(Stdio::piped())

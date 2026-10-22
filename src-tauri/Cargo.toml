@@ -1,14 +1,14 @@
 [package]
-name = "opendownload-manager"
-description = "OpenDownload Manager – free, open source download manager"
+name = "veltrix"
+description = "Veltrix – free, open source download manager"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
-default-run = "opendownload-manager"
+default-run = "veltrix"
 
 [lib]
-name = "opendownload_manager_lib"
+name = "veltrix_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

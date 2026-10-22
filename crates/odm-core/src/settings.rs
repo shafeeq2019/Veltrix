@@ -142,7 +142,7 @@ pub struct Settings {
 /// Id of the bundled extension when loaded unpacked (pinned via the `key`
 /// in its manifest). Store builds get a different id that must be added.
 pub const DEFAULT_CHROMIUM_EXTENSION_ID: &str = "pjmfnhocabgijmcbdcbkfeaogjnhffea";
-pub const FIREFOX_EXTENSION_ID: &str = "odm@opendownload-manager.local";
+pub const FIREFOX_EXTENSION_ID: &str = "veltrix@veltrix.local";
 
 impl Default for Settings {
     fn default() -> Self {

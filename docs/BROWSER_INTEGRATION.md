@@ -3,7 +3,7 @@
 Die Integration besteht aus drei Teilen:
 
 1. **Erweiterung** (`extension/`) für Chromium-Browser und Firefox (Manifest V3).
-2. **Native-Messaging-Host** `odm-native-host` (wird mit der App installiert).
+2. **Native-Messaging-Host** `veltrix-native-host` (wird mit der App installiert).
 3. **IPC-Endpunkt** in der laufenden Desktop-App.
 
 ## Was die Erweiterung tut – und was nicht
@@ -23,7 +23,7 @@ Die Integration besteht aus drei Teilen:
 * **Cookies** werden nur gesendet, wenn du im Popup „Cookies mitsenden“ aktivierst – dabei
   fragt der Browser nach der Berechtigung. Die App hält sie nur im Arbeitsspeicher und nur
   für diesen einen Download.
-* Kontextmenü „Mit OpenDownload Manager herunterladen“ für Links, Video- und Audio-Elemente.
+* Kontextmenü „Mit Veltrix herunterladen“ für Links, Video- und Audio-Elemente.
 
 Die Einstellungen (Dateitypen, Ausschlüsse, automatische Übernahme) liegen in der App
 (Einstellungen → Browser); die Erweiterung lädt sie alle 5 Minuten neu.
@@ -32,7 +32,7 @@ Die Einstellungen (Dateitypen, Ausschlüsse, automatische Übernahme) liegen in 
 
 ### 1. App installieren
 
-Der Installer (Windows) bzw. das App-Bundle (macOS) enthält `odm-native-host`. Beim ersten Start
+Der Installer (Windows) bzw. das App-Bundle (macOS) enthält `veltrix-native-host`. Beim ersten Start
 registriert die App den Host für alle erkannten Browser des aktuellen Benutzers
 (ohne Administratorrechte). Status und manuelle Registrierung: **Einstellungen → Browser**.
 
@@ -50,7 +50,7 @@ npm run build          # erzeugt dist/chrome und dist/firefox
   „Entpackte Erweiterung laden“ → `extension/dist/chrome`.
   Die ID ist durch den `key` im Manifest fest: `pjmfnhocabgijmcbdcbkfeaogjnhffea`.
 * **Firefox (≥ 128):** `about:debugging#/runtime/this-firefox` → „Temporäres Add-on laden“ →
-  `extension/dist/firefox/manifest.json`. Add-on-ID: `odm@opendownload-manager.local`.
+  `extension/dist/firefox/manifest.json`. Add-on-ID: `veltrix@veltrix.local`.
   Für dauerhafte Installation muss das Add-on über addons.mozilla.org signiert werden.
 
 Wird die Chromium-Erweiterung im Chrome Web Store veröffentlicht, erhält sie eine andere ID.
@@ -59,19 +59,19 @@ eingetragen werden (die App aktualisiert dann die Manifeste).
 
 ## Registrierung im Detail
 
-Hostname: `org.opendownload.manager`
+Hostname: `app.veltrix`
 
 ### Windows
 
-Die App schreibt zwei Manifeste nach `%APPDATA%\org.opendownload.manager\native-messaging\`
+Die App schreibt zwei Manifeste nach `%APPDATA%\app.veltrix\native-messaging\`
 (`chromium.json`, `firefox.json`) und setzt den Standardwert dieser Registry-Schlüssel auf den
 jeweiligen Pfad:
 
 ```
-HKCU\Software\Google\Chrome\NativeMessagingHosts\org.opendownload.manager      (Chrome, Brave)
-HKCU\Software\Chromium\NativeMessagingHosts\org.opendownload.manager
-HKCU\Software\Microsoft\Edge\NativeMessagingHosts\org.opendownload.manager
-HKCU\Software\Mozilla\NativeMessagingHosts\org.opendownload.manager
+HKCU\Software\Google\Chrome\NativeMessagingHosts\app.veltrix      (Chrome, Brave)
+HKCU\Software\Chromium\NativeMessagingHosts\app.veltrix
+HKCU\Software\Microsoft\Edge\NativeMessagingHosts\app.veltrix
+HKCU\Software\Mozilla\NativeMessagingHosts\app.veltrix
 ```
 
 Der NSIS-Deinstaller entfernt diese Schlüssel (`src-tauri/windows/installer-hooks.nsh`).
@@ -80,7 +80,7 @@ verbleibende Schlüssel zeigen sonst auf eine nicht mehr vorhandene Datei und si
 
 ### macOS
 
-Manifest-Dateien `org.opendownload.manager.json` werden nur für installierte Browser angelegt:
+Manifest-Dateien `app.veltrix.json` werden nur für installierte Browser angelegt:
 
 ```
 ~/Library/Application Support/Google/Chrome/NativeMessagingHosts/
@@ -91,15 +91,15 @@ Manifest-Dateien `org.opendownload.manager.json` werden nur für installierte Br
 ~/Library/Application Support/Mozilla/NativeMessagingHosts/
 ```
 
-`path` zeigt auf `/Applications/OpenDownload Manager.app/Contents/MacOS/odm-native-host`.
+`path` zeigt auf `/Applications/Veltrix.app/Contents/MacOS/veltrix-native-host`.
 Wird die App verschoben, bei Bedarf in den Einstellungen erneut „Registrieren“ wählen
 (passiert auch automatisch bei jedem App-Start).
 
 ### Manuell
 
 ```bash
-odm-native-host --manifest chrome pjmfnhocabgijmcbdcbkfeaogjnhffea > org.opendownload.manager.json
-odm-native-host --manifest firefox > org.opendownload.manager.json
+veltrix-native-host --manifest chrome pjmfnhocabgijmcbdcbkfeaogjnhffea > app.veltrix.json
+veltrix-native-host --manifest firefox > app.veltrix.json
 ```
 
 ## Verhalten, wenn die App nicht läuft

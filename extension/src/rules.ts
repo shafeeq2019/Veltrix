@@ -1,5 +1,5 @@
 // Pure capture rules. Decides whether a download the browser started should
-// be offered to OpenDownload Manager. No browser APIs here, so it is unit
+// be offered to Veltrix. No browser APIs here, so it is unit
 // testable.
 
 export interface CaptureConfig {

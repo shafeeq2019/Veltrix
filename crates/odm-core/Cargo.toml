@@ -1,6 +1,6 @@
 [package]
 name = "odm-core"
-description = "OpenDownload Manager download engine, queue, scheduler and storage"
+description = "Veltrix download engine, queue, scheduler and storage"
 version.workspace = true
 edition.workspace = true
 license.workspace = true

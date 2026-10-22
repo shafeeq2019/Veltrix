@@ -20,7 +20,7 @@ fn menu(app: &AppHandle, lang: Lang) -> tauri::Result<Menu<tauri::Wry>> {
 pub fn create(app: &AppHandle, lang: Lang) -> tauri::Result<()> {
     let menu = menu(app, lang)?;
     let mut builder = TrayIconBuilder::with_id(TRAY_ID)
-        .tooltip("OpenDownload Manager")
+        .tooltip("Veltrix")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {
@@ -57,7 +57,7 @@ pub fn set_language(app: &AppHandle, lang: Lang) {
 pub fn update_tooltip(app: &AppHandle, lang: Lang, total_speed: u64, active: usize) {
     if let Some(tray) = app.tray_by_id(TRAY_ID) {
         let text = if active == 0 {
-            "OpenDownload Manager".to_string()
+            "Veltrix".to_string()
         } else {
             tr(lang, Text::TrayActive)
                 .replace("{active}", &active.to_string())

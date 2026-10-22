@@ -1,4 +1,4 @@
-//! OpenDownload Manager desktop application (Tauri 2).
+//! Veltrix desktop application (Tauri 2).
 
 mod capture;
 mod commands;
@@ -60,6 +60,13 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(move |app| {
+            if std::env::var_os("ODM_DATA_DIR").is_none() {
+                match odm_ipc::transport::migrate_legacy_data(&data_dir, &odm_ipc::transport::legacy_data_dir()) {
+                    Ok(true) => tracing::info!("took over downloads and settings from OpenDownload Manager"),
+                    Ok(false) => {}
+                    Err(e) => tracing::warn!(error = %e, "could not take over data from OpenDownload Manager"),
+                }
+            }
             let store = Store::open(&data_dir.join("odm.sqlite"))?;
             let manager = tauri::async_runtime::block_on(async { Manager::start(store) })?;
             let offers = capture::Offers::default();
@@ -74,6 +81,7 @@ pub fn run() {
             keep_awake_while_downloading(manager.clone());
             tray::create(app.handle(), i18n::Lang::from_settings(&manager.settings()))?;
 
+            native_host::remove_legacy_registration();
             if native_host::host_executable().is_some() {
                 if let Err(e) = native_host::register(&data_dir, &manager.settings().chromium_extension_ids) {
                     tracing::warn!(error = %e, "browser integration not registered");

@@ -5,7 +5,7 @@ node_modules/
 /extension/*.zip
 /src-tauri/target
 /src-tauri/gen
-/src-tauri/binaries/odm-native-host-*
+/src-tauri/binaries/veltrix-native-host-*
 *.odmpart
 .DS_Store
 *.log

@@ -45,7 +45,7 @@ pub enum OfferSource {
     /// A download the browser started (downloads API).
     #[default]
     BrowserDownload,
-    /// "Download with OpenDownload Manager" from the context menu.
+    /// "Download with Veltrix" from the context menu.
     ContextMenu,
 }
 

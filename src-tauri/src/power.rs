@@ -77,7 +77,7 @@ mod platform {
                 return;
             }
             let kind = cfstr("PreventUserIdleSystemSleep");
-            let name = cfstr("OpenDownload Manager: Downloads laufen");
+            let name = cfstr("Veltrix: Downloads laufen");
             let mut id = 0u32;
             let rc = unsafe { IOPMAssertionCreateWithName(kind, K_IOPM_ASSERTION_LEVEL_ON, name, &mut id) };
             unsafe {
