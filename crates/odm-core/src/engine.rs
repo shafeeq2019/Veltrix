@@ -245,7 +245,7 @@ async fn send_with_retry(
             Err(e) if e.retryable && attempt < ctx.max_retries => {
                 attempt += 1;
                 let delay = e.retry_after.unwrap_or_else(|| backoff(attempt));
-                tracing::debug!(attempt, ?delay, error = %e.message, "request failed, retrying");
+                tracing::info!(attempt, ?delay, error = %e.message, "request failed, retrying");
                 tokio::select! {
                     _ = tokio::time::sleep(delay) => {}
                     _ = wait_stop(stop) => return Ok(None),
@@ -600,7 +600,7 @@ async fn download_segment(
                         if e.retryable && attempts < ctx.max_retries {
                             attempts += 1;
                             let delay = e.retry_after.unwrap_or_else(|| backoff(attempts));
-                            tracing::debug!(segment = idx, attempts, error = %e.message, "segment request failed, retrying");
+                            tracing::info!(segment = idx, attempts, error = %e.message, "segment request failed, retrying");
                             tokio::select! {
                                 _ = tokio::time::sleep(delay) => continue,
                                 _ = wait_stop(stop) => return Ok(SegExit::Stopped),
@@ -667,7 +667,7 @@ async fn download_segment(
                 if e.retryable && attempts < ctx.max_retries {
                     attempts += 1;
                     let delay = e.retry_after.unwrap_or_else(|| backoff(attempts));
-                    tracing::debug!(segment = idx, attempts, error = %e.message, "transfer interrupted, retrying");
+                    tracing::info!(segment = idx, attempts, error = %e.message, "transfer interrupted, retrying");
                     tokio::select! {
                         _ = tokio::time::sleep(delay) => continue,
                         _ = wait_stop(stop) => return Ok(SegExit::Stopped),

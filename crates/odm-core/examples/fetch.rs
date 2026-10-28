@@ -7,7 +7,10 @@ use std::time::{Duration, Instant};
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt().with_env_filter(tracing_subscriber::EnvFilter::from_env("ODM_LOG")).with_writer(std::io::stderr).init();
+    tracing_subscriber::fmt()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_env("ODM_LOG"))
+        .with_writer(std::io::stderr)
+        .init();
     let mut args = std::env::args().skip(1);
     let url = args.next().expect("url");
     let secs: u64 = args.next().and_then(|s| s.parse().ok()).unwrap_or(40);
