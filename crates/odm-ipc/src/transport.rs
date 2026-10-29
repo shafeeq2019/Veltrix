@@ -200,13 +200,22 @@ impl Client {
     #[cfg(windows)]
     fn connect(&self) -> io::Result<std::fs::File> {
         let name = endpoint(&self.data_dir);
-        // ERROR_PIPE_BUSY (231): all instances busy, retry briefly.
+        // ERROR_PIPE_BUSY (231): all instances busy. ERROR_FILE_NOT_FOUND (2):
+        // the app is between two pipe instances, or not running at all. The
+        // token file exists, so give the app a moment before giving up.
+        let mut last = None;
         for _ in 0..50 {
             match std::fs::OpenOptions::new().read(true).write(true).open(&name) {
                 Ok(f) => return Ok(f),
-                Err(e) if e.raw_os_error() == Some(231) => std::thread::sleep(Duration::from_millis(100)),
+                Err(e) if matches!(e.raw_os_error(), Some(2) | Some(231)) => {
+                    last = Some(e);
+                    std::thread::sleep(Duration::from_millis(100));
+                }
                 Err(e) => return Err(e),
             }
+        }
+        if let Some(e) = last.filter(|e| e.raw_os_error() == Some(2)) {
+            return Err(e);
         }
         Err(io::Error::new(io::ErrorKind::TimedOut, "named pipe busy"))
     }

@@ -90,3 +90,40 @@ fn not_running_is_reported() {
     let err = Client::new(dir.path().to_path_buf()).request(None, Envelope::new("p", Request::Ping)).unwrap_err();
     assert!(matches!(err, odm_ipc::transport::ClientError::NotRunning(_)));
 }
+
+/// Clients that connect and vanish right away (a browser killing the host)
+/// must not take the endpoint down for later requests.
+#[tokio::test(flavor = "multi_thread")]
+async fn survives_clients_that_disconnect_immediately() {
+    let dir = tempfile::tempdir().unwrap();
+    let data = dir.path().to_path_buf();
+    let d2 = data.clone();
+    tokio::spawn(async move { serve(&d2, handler()).await.unwrap() });
+    let client = Client::new(data.clone());
+    let ping = || client.request(None, Envelope::new("p", Request::Ping));
+    let mut ok = false;
+    for _ in 0..50 {
+        if ping().is_ok() {
+            ok = true;
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+    assert!(ok, "server did not come up");
+    let name = odm_ipc::transport::endpoint(&data);
+    for _ in 0..20 {
+        #[cfg(windows)]
+        drop(std::fs::OpenOptions::new().read(true).write(true).open(&name));
+        #[cfg(unix)]
+        drop(std::os::unix::net::UnixStream::connect(&name));
+    }
+    for i in 0..5 {
+        let res = tokio::task::spawn_blocking({
+            let data = data.clone();
+            move || Client::new(data).request(None, Envelope::new("p", Request::Ping))
+        })
+        .await
+        .unwrap();
+        assert!(matches!(res.map(|r| r.body), Ok(Response::Pong { .. })), "request {i} failed after dropped clients");
+    }
+}

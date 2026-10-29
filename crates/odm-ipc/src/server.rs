@@ -83,7 +83,16 @@ mod platform {
         }
         let my_uid = unsafe { libc::getuid() };
         loop {
-            let (stream, _) = listener.accept().await?;
+            // A failed accept (e.g. too many open files) must not end the
+            // endpoint for the rest of the session.
+            let stream = match listener.accept().await {
+                Ok((stream, _)) => stream,
+                Err(e) => {
+                    tracing::warn!(error = %e, "accepting a browser connection failed");
+                    tokio::time::sleep(Duration::from_millis(100)).await;
+                    continue;
+                }
+            };
             match stream.peer_cred() {
                 Ok(cred) if cred.uid() == my_uid => {}
                 _ => continue,
@@ -101,10 +110,28 @@ mod platform {
     pub async fn serve(name: &str, token: Arc<str>, handler: Arc<dyn Handler>) -> io::Result<()> {
         let mut server = ServerOptions::new().first_pipe_instance(true).reject_remote_clients(true).create(name)?;
         loop {
-            server.connect().await?;
-            let connected = server;
-            server = ServerOptions::new().reject_remote_clients(true).create(name)?;
-            tokio::spawn(handle_connection(connected, token.clone(), handler.clone()));
+            // A client that connects and goes away before the connection is
+            // complete makes connect() fail (e.g. ERROR_NO_DATA). That only
+            // concerns this one instance: replace it and keep serving,
+            // otherwise the pipe disappears and the extension reports
+            // "app not running" until the app is restarted.
+            let connected = server.connect().await;
+            let next = loop {
+                match ServerOptions::new().reject_remote_clients(true).create(name) {
+                    Ok(s) => break s,
+                    Err(e) => {
+                        tracing::warn!(error = %e, "creating the next pipe instance failed");
+                        tokio::time::sleep(Duration::from_millis(200)).await;
+                    }
+                }
+            };
+            let current = std::mem::replace(&mut server, next);
+            match connected {
+                Ok(()) => {
+                    tokio::spawn(handle_connection(current, token.clone(), handler.clone()));
+                }
+                Err(e) => tracing::debug!(error = %e, "browser connection dropped while connecting"),
+            }
         }
     }
 }

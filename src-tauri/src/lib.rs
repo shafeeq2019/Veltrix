@@ -206,8 +206,14 @@ fn start_ipc(app: tauri::AppHandle, manager: Manager, offers: capture::Offers, d
         },
     );
     tauri::async_runtime::spawn(async move {
-        if let Err(e) = odm_ipc::server::serve(&data_dir, handler).await {
-            tracing::error!(error = %e, "browser integration endpoint unavailable");
+        // The endpoint must stay available for the whole session; if it ever
+        // stops, bring it back instead of leaving the extension without app.
+        loop {
+            match odm_ipc::server::serve(&data_dir, handler.clone()).await {
+                Ok(()) => tracing::warn!("browser integration endpoint stopped, restarting"),
+                Err(e) => tracing::error!(error = %e, "browser integration endpoint unavailable, retrying"),
+            }
+            tokio::time::sleep(std::time::Duration::from_secs(2)).await;
         }
     });
 }
